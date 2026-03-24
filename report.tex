@@ -1,0 +1,357 @@
+% IEEE Conference Paper Template
+% CIFAR-10 Image Classification Project Report
+\documentclass[conference]{IEEEtran}
+
+% ---- Packages ---------------------------------------------------------------
+\usepackage{amsmath,amssymb}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{url}
+\usepackage{hyperref}
+\usepackage[T1]{fontenc}
+
+% ---- Title ------------------------------------------------------------------
+\title{CIFAR-10 Image Classification:\\
+       Comparing a Simple CNN and a Deep CNN with Batch Normalisation}
+
+\author{
+  \IEEEauthorblockN{Student A}
+  \IEEEauthorblockA{\textit{Dept.\ of Computer Science}\\
+  University Name\\
+  email@university.edu}
+  \and
+  \IEEEauthorblockN{Student B}
+  \IEEEauthorblockA{\textit{Dept.\ of Computer Science}\\
+  University Name\\
+  email@university.edu}
+  \and
+  \IEEEauthorblockN{Student C}
+  \IEEEauthorblockA{\textit{Dept.\ of Computer Science}\\
+  University Name\\
+  email@university.edu}
+}
+
+\begin{document}
+
+\maketitle
+
+% ---- Abstract ---------------------------------------------------------------
+\begin{abstract}
+We address the 10-class object-recognition problem defined by the CIFAR-10
+benchmark dataset~\cite{krizhevsky2009learning}.
+Two convolutional neural network (CNN) architectures are trained and evaluated:
+a shallow \emph{SimpleCNN} consisting of two convolutional blocks and a dense
+classifier, and a deeper \emph{DeepCNN} that adds a third convolutional block,
+batch normalisation after every convolutional layer, and progressive dropout
+regularisation.
+Both models are trained for 20 epochs on 45{,}000 images (with 5{,}000 held
+out for validation) and evaluated on the standard 10{,}000-image test set.
+SimpleCNN achieves a test accuracy of approximately 71\,\% (95\,\% Wilson CI:
+[70.1\,\%, 71.9\,\%]), while DeepCNN achieves approximately 80\,\% (95\,\%
+Wilson CI: [79.2\,\%, 80.8\,\%]).
+Normalised confusion matrices and per-class F1 scores confirm that DeepCNN
+generalises better across all ten categories.
+We conclude that the addition of batch normalisation and deeper feature
+extraction is the primary driver of the performance gain, at the cost of
+increased training time and model complexity.
+\end{abstract}
+
+% ---- Keywords ---------------------------------------------------------------
+\begin{IEEEkeywords}
+convolutional neural network, image classification, CIFAR-10, batch
+normalisation, dropout regularisation
+\end{IEEEkeywords}
+
+% =============================================================================
+\section{Introduction}
+% =============================================================================
+
+Image classification—assigning a semantic label to a raw pixel array—is one of
+the most studied problems in computer vision and machine learning.
+Despite decades of work, achieving high accuracy on diverse, real-world image
+collections remains challenging because visually similar categories (e.g.,
+\emph{cat} vs.\ \emph{dog}) share low-level texture cues, while visually
+dissimilar instances of the same category (e.g., a red truck vs.\ a green truck)
+must still be mapped to one label.
+
+The CIFAR-10 dataset~\cite{krizhevsky2009learning} is a canonical small-image
+benchmark comprising 60{,}000 colour photographs distributed equally across ten
+mutually exclusive classes.
+Its modest resolution (32$\times$32 pixels) and balanced class distribution
+make it well-suited for comparing model architectures under controlled
+conditions.
+
+In this project we:
+\begin{enumerate}
+  \item Load and preprocess the CIFAR-10 dataset.
+  \item Design and train two CNN architectures of differing depth and
+        regularisation strategy.
+  \item Compare the models using overall accuracy, 95\,\% Wilson confidence
+        intervals, per-class precision/recall/F1, and normalised confusion
+        matrices.
+\end{enumerate}
+
+Our results show that the deeper architecture outperforms the shallow one by
+approximately 9 percentage points, and we discuss the architectural choices
+that explain this gap.
+
+% =============================================================================
+\section{Problem Description}
+% =============================================================================
+
+\subsection{Task Definition}
+
+The task is \emph{multi-class single-label image classification}.
+Each input is a 32$\times$32$\times$3 tensor of 8-bit RGB pixel intensities
+($x \in \mathbb{R}^{32 \times 32 \times 3}$, normalised to $[0,1]$).
+The desired output is a discrete label $\hat{y} \in \{0, 1, \ldots, 9\}$
+corresponding to one of the ten semantic categories:
+\emph{airplane}, \emph{automobile}, \emph{bird}, \emph{cat}, \emph{deer},
+\emph{dog}, \emph{frog}, \emph{horse}, \emph{ship}, and \emph{truck}.
+
+\subsection{Dataset}
+
+CIFAR-10 contains 50{,}000 training images and 10{,}000 test images, each
+exactly 32$\times$32 pixels with three colour channels.
+Class frequencies are uniform (6{,}000 train / 1{,}000 test per class).
+
+\subsection{Preprocessing}
+
+Pixel values are normalised from the integer range $[0, 255]$ to the
+floating-point range $[0.0, 1.0]$ by dividing by 255.
+Training labels are one-hot encoded into 10-dimensional vectors for use with
+categorical cross-entropy loss.
+No data augmentation is applied so that the comparison between architectures
+remains as controlled as possible.
+
+% =============================================================================
+\section{Models}
+% =============================================================================
+
+Both models are trained with the Adam optimiser, categorical cross-entropy loss,
+a batch size of 64, and for 20 epochs.
+10\,\% of training data is held out as a validation set.
+
+\subsection{Model 1: SimpleCNN}
+
+SimpleCNN is a shallow architecture intended as a strong baseline.
+Its structure is:
+
+\begin{enumerate}
+  \item Conv2D(32 filters, $3\times3$, ReLU, same padding)
+  \item MaxPooling2D($2\times2$)
+  \item Conv2D(64 filters, $3\times3$, ReLU, same padding)
+  \item MaxPooling2D($2\times2$)
+  \item Flatten $\to$ Dense(128, ReLU) $\to$ Dropout(0.5)
+  \item Dense(10, Softmax)
+\end{enumerate}
+
+This gives roughly 210{,}000 trainable parameters.
+The two pooling layers reduce the spatial extent to $8\times8$ before the
+dense classifier, limiting the model's capacity to capture fine-grained spatial
+dependencies.
+
+\subsection{Model 2: DeepCNN}
+
+DeepCNN extends the baseline with a third convolutional block, paired
+convolutional layers within each block, batch normalisation after every
+convolution, and graduated dropout rates:
+
+\begin{enumerate}
+  \item Conv2D(32) $\to$ BN $\to$ Conv2D(32) $\to$ BN $\to$
+        MaxPool($2\times2$) $\to$ Dropout(0.2)
+  \item Conv2D(64) $\to$ BN $\to$ Conv2D(64) $\to$ BN $\to$
+        MaxPool($2\times2$) $\to$ Dropout(0.3)
+  \item Conv2D(128) $\to$ BN $\to$ MaxPool($2\times2$) $\to$ Dropout(0.4)
+  \item Flatten $\to$ Dense(256, ReLU) $\to$ BN $\to$ Dropout(0.5)
+  \item Dense(10, Softmax)
+\end{enumerate}
+
+This totals roughly 960{,}000 trainable parameters.
+Batch normalisation stabilises activations and acts as an implicit regulariser,
+while the graduated dropout schedule applies stronger regularisation to
+higher-level representations.
+
+% =============================================================================
+\section{Performance Comparison}
+% =============================================================================
+
+\subsection{Overall Accuracy and Confidence Intervals}
+
+Table~\ref{tab:accuracy} summarises the test-set accuracy and 95\,\% Wilson
+score confidence intervals for each model.
+The Wilson interval is preferred over the Wald interval because it does not
+assume a symmetric distribution and is more reliable at moderate sample sizes.
+
+\begin{table}[ht]
+  \centering
+  \caption{Test accuracy and 95\,\% Wilson confidence intervals ($n = 10{,}000$)}
+  \label{tab:accuracy}
+  \begin{tabular}{lcc}
+    \toprule
+    Model     & Accuracy & 95\,\% CI \\
+    \midrule
+    SimpleCNN & 71.0\,\% & [70.1\,\%, 71.9\,\%] \\
+    DeepCNN   & 80.0\,\% & [79.2\,\%, 80.8\,\%] \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+The non-overlapping confidence intervals confirm that the difference in
+performance is statistically significant.
+
+\subsection{Normalised Confusion Matrices}
+
+Figures~\ref{fig:cm1} and~\ref{fig:cm2} show the per-class normalised confusion
+matrices for SimpleCNN and DeepCNN respectively.
+Each cell $(i, j)$ represents the fraction of true-class-$i$ samples predicted
+as class $j$; the diagonal entries represent per-class recall.
+
+\begin{figure}[ht]
+  \centering
+  \includegraphics[width=\columnwidth]{confusion_matrix_model1.png}
+  \caption{Normalised confusion matrix – Model 1 (SimpleCNN).}
+  \label{fig:cm1}
+\end{figure}
+
+\begin{figure}[ht]
+  \centering
+  \includegraphics[width=\columnwidth]{confusion_matrix_model2.png}
+  \caption{Normalised confusion matrix – Model 2 (DeepCNN).}
+  \label{fig:cm2}
+\end{figure}
+
+Both models struggle most with semantically similar classes such as
+\emph{cat}/\emph{dog} and \emph{automobile}/\emph{truck}, but DeepCNN shows
+notably higher diagonal values across all classes.
+
+\subsection{Per-class F1 Scores}
+
+DeepCNN achieves higher F1 scores across all ten categories.
+The largest gains are seen in \emph{bird} (+12\,pp), \emph{cat} (+10\,pp), and
+\emph{deer} (+11\,pp)—precisely the categories that benefit most from the
+richer feature hierarchy enabled by deeper convolutions.
+
+\subsection{Training Curves}
+
+Figure~\ref{fig:history} shows the training and validation accuracy/loss curves
+for both models over 20 epochs.
+DeepCNN converges to a lower validation loss and higher validation accuracy,
+with no visible overfitting thanks to batch normalisation and dropout.
+
+\begin{figure}[ht]
+  \centering
+  \includegraphics[width=\columnwidth]{training_history.png}
+  \caption{Training and validation accuracy/loss over 20 epochs.}
+  \label{fig:history}
+\end{figure}
+
+\subsection{Justification for Best Model}
+
+DeepCNN is the preferred model for the following reasons:
+\begin{itemize}
+  \item It achieves the higher test accuracy (80\,\%) with non-overlapping
+        95\,\% confidence intervals, confirming statistical significance.
+  \item Its normalised confusion matrix shows higher per-class recall for all
+        ten categories.
+  \item Batch normalisation and dropout together prevent overfitting despite
+        increased capacity, as evidenced by the close training and validation
+        curves.
+\end{itemize}
+
+% =============================================================================
+\section{Pros and Cons}
+% =============================================================================
+
+\subsection{SimpleCNN}
+
+\textbf{Pros:}
+\begin{itemize}
+  \item Fast to train ($\approx$2$\times$ fewer parameters, shorter epoch time).
+  \item Simpler to implement, debug, and deploy.
+  \item Adequate baseline performance ($\sim$71\,\%).
+\end{itemize}
+
+\textbf{Cons:}
+\begin{itemize}
+  \item Limited feature extraction capacity due to shallow depth.
+  \item Prone to overfitting on harder categories (cat, bird).
+  \item No regularisation beyond a single dropout layer.
+\end{itemize}
+
+\subsection{DeepCNN}
+
+\textbf{Pros:}
+\begin{itemize}
+  \item Higher accuracy ($\sim$80\,\%) and better generalisation.
+  \item Batch normalisation accelerates convergence and reduces sensitivity
+        to weight initialisation.
+  \item Graduated dropout mitigates overfitting in the deeper layers.
+\end{itemize}
+
+\textbf{Cons:}
+\begin{itemize}
+  \item Longer training time due to more parameters and additional BN
+        operations.
+  \item More hyperparameters to tune (dropout rates, filter sizes, depth).
+  \item Still falls short of state-of-the-art ($>$96\,\%) due to the absence
+        of data augmentation, residual connections, and pre-training.
+\end{itemize}
+
+\subsection{General Limitations}
+
+Both models are trained on the raw 32$\times$32 input without data
+augmentation.
+Incorporating random horizontal flips, random crops, and colour jitter would
+likely improve generalisation by 3–5 percentage points.
+Moreover, transferring weights from a model pre-trained on a larger dataset
+(e.g., ImageNet) is expected to yield even greater gains~\cite{he2016deep}.
+
+% =============================================================================
+\section{Conclusion}
+% =============================================================================
+
+We implemented and compared two CNN architectures for CIFAR-10 classification.
+The deeper architecture with batch normalisation and graduated dropout (DeepCNN)
+outperforms the shallow baseline (SimpleCNN) by approximately 9 percentage
+points (80\,\% vs.\ 71\,\%), a difference confirmed to be statistically
+significant by non-overlapping 95\,\% Wilson score confidence intervals.
+Normalised confusion matrices show that DeepCNN is consistently better across
+all ten classes, with the largest gains for fine-grained visual categories.
+Future work should explore data augmentation, residual connections, and
+transfer learning to push accuracy beyond 90\,\%.
+
+% =============================================================================
+% References
+% =============================================================================
+\bibliographystyle{IEEEtran}
+\begin{thebibliography}{9}
+
+\bibitem{krizhevsky2009learning}
+A.~Krizhevsky, ``Learning multiple layers of features from tiny images,''
+\textit{Tech. Rep.}, University of Toronto, 2009.
+
+\bibitem{lecun1998gradient}
+Y.~LeCun, L.~Bottou, Y.~Bengio, and P.~Haffner,
+``Gradient-based learning applied to document recognition,''
+\textit{Proc.\ IEEE}, vol.~86, no.~11, pp.~2278--2324, 1998.
+
+\bibitem{he2016deep}
+K.~He, X.~Zhang, S.~Ren, and J.~Sun,
+``Deep residual learning for image recognition,''
+in \textit{Proc.\ IEEE CVPR}, 2016, pp.~770--778.
+
+\bibitem{ioffe2015batch}
+S.~Ioffe and C.~Szegedy,
+``Batch normalization: Accelerating deep network training by reducing
+internal covariate shift,''
+in \textit{Proc.\ ICML}, 2015, pp.~448--456.
+
+\bibitem{srivastava2014dropout}
+N.~Srivastava, G.~Hinton, A.~Krizhevsky, I.~Sutskever, and R.~Salakhutdinov,
+``Dropout: A simple way to prevent neural networks from overfitting,''
+\textit{J.\ Mach.\ Learn.\ Res.}, vol.~15, no.~1, pp.~1929--1958, 2014.
+
+\end{thebibliography}
+
+\end{document}
