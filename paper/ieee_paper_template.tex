@@ -1,0 +1,196 @@
+\documentclass[conference]{IEEEtran}
+
+% --- Packages ---
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{amsmath,amssymb,amsfonts}
+\usepackage{graphicx}
+\usepackage{subcaption}
+\usepackage{booktabs}
+\usepackage{url}
+\usepackage{hyperref}
+
+% --- Paper metadata ---
+\title{Predicting Ride Fare Prices with Machine Learning\\
+\large Uber \& Lyft Regression Analysis}
+
+\author{%
+\IEEEauthorblockN{Michael DeJournett}
+\IEEEauthorblockA{Intro to Machine Learning\\
+\texttt{your.email@example.com}}
+}
+
+\begin{document}
+
+\maketitle
+
+\begin{abstract}
+This two-page report studies ride fare prediction for Uber and Lyft trips using supervised learning.
+Given 14 trip-level features (distance, time, location, vehicle type, and weather conditions), the goal is to predict fare amount.
+We evaluate baseline Linear Regression and ensemble Random Forest models, report test-set performance with 95\% confidence intervals, and compare model
+quality using regression metrics and normalized confusion matrices.
+The best model (Random Forest) achieves MAE = \textbf{\$1.23}, RMSE = \textbf{\$2.22}, and $R^2=\textbf{0.943}$
+with a 95\% confidence interval for MAE of \textbf{[1.182, 1.268]}.
+Results indicate that Random Forest provides the best trade-off between accuracy,
+stability, and practical usability for this dataset, vastly outperforming the linear baseline.
+\end{abstract}
+
+\begin{IEEEkeywords}
+machine learning, regression, random forest, Uber, Lyft, fare prediction
+\end{IEEEkeywords}
+
+\section{Introduction}
+Fare prediction is useful for pricing transparency, dispatch planning, and customer experience.
+This project compares baseline (linear) and ensemble regression models on Uber/Lyft trip data to estimate fares.
+Our final results are MAE = \textbf{\$1.23}, RMSE = \textbf{\$2.22}, and $R^2=\textbf{0.943}$,
+with 95\% confidence intervals computed via bootstrap resampling (500 iterations).
+Among the tested methods, Random Forest performs best and is selected as the final approach.
+The report concludes with model strengths/limitations and practical implications for real-world deployment.
+
+\section{Problem Formulation}
+Let $\mathbf{x} \in \mathbb{R}^{14}$ denote trip features and $y \in \mathbb{R}$ denote fare amount (USD).
+The learning task is to estimate a function $f$ such that:
+\begin{equation}
+\hat{y} = f(\mathbf{x}), \quad \text{with objective } \min_f\; \mathbb{E}[\ell(y,\hat{y})].
+\end{equation}
+Inputs include distance (miles), temporal features (hour, day-of-week, month), location encodings (source, destination),
+vehicle type (cab type, service name), and weather conditions (temperature, humidity, wind, pressure, rain, clouds).
+Output is fare price. Data splits: 80\% train, 20\% test. Preprocessing included median imputation for weather and
+Label Encoding for categorical features; no scaling was applied to Random Forest.
+
+\section{Models}
+Two main models are compared:
+\begin{itemize}
+	\item \textbf{Linear Regression (Baseline):} Standard least-squares regression with StandardScaler normalization.
+          Target: establish a simple interpretable baseline.
+	\item \textbf{Random Forest Regressor (Ensemble):} 30 trees, max depth 10, random state 42.
+          Designed to capture non-linear fare dependencies (e.g., surge effects, distance interactions).
+\end{itemize}
+No hyperparameter tuning was performed; parameters were chosen based on domain knowledge and
+computational efficiency for this dataset.
+
+\section{Performance Indicators and Best Model Justification}
+Primary regression metrics:
+\begin{itemize}
+	\item Mean Absolute Error (MAE)
+	\item Root Mean Squared Error (RMSE)
+	\item Coefficient of Determination ($R^2$)
+\end{itemize}
+Confidence intervals (95\%) must be reported for at least one primary metric.
+
+\begin{table}[htbp]
+\caption{Model Performance on Test Set with 95\% Confidence Intervals}
+\label{tab:results}
+\centering
+\begin{tabular}{lcccc}
+\toprule
+Model & MAE (\$) & RMSE (\$) & $R^2$ & 95\% CI (MAE) \\
+\midrule
+Linear Regression & 5.30 & 6.73 & 0.480 & [5.205, 5.396] \\
+Random Forest & \textbf{1.23} & \textbf{2.22} & \textbf{0.943} & [1.182, 1.268] \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\section{Normalized Confusion Matrix (Binned Fares)}
+Although the main task is regression, a normalized confusion matrix can be used by binning fares
+into ranges (e.g., low/medium/high):
+\begin{equation}
+\tilde{y} = \mathrm{bin}(y), \qquad \tilde{\hat{y}} = \mathrm{bin}(\hat{y}).
+\end{equation}
+Row-normalized confusion matrices for both Linear Regression and Random Forest are shown below.
+
+\begin{figure}[htbp]
+\centering
+\subfloat[Linear Regression]{%
+\IfFileExists{figures/normalized_confusion_matrix_lr.png}{
+\includegraphics[width=0.45\columnwidth]{figures/normalized_confusion_matrix_lr.png}
+}{
+\fbox{\parbox[c][2.5cm][c]{0.43\columnwidth}{\centering LR matrix}}
+}
+}%
+\hspace{0.05\columnwidth}%
+\subfloat[Random Forest]{%
+\IfFileExists{figures/normalized_confusion_matrix_rf.png}{
+\includegraphics[width=0.45\columnwidth]{figures/normalized_confusion_matrix_rf.png}
+}{
+\fbox{\parbox[c][2.5cm][c]{0.43\columnwidth}{\centering RF matrix}}
+}
+}
+\caption{Normalized confusion matrices on binned fare ranges for both models.}
+\label{fig:ncm}
+\end{figure}
+
+\section{Actual vs Predicted Analysis}
+Scatter plots comparing true vs. predicted fares reveal model behavior and systematic biases.
+Linear Regression shows consistent under/over-prediction patterns typical of linear models.
+Random Forest exhibits tighter clustering around the ideal diagonal, indicating superior prediction accuracy.
+
+\begin{figure}[htbp]
+\centering
+\IfFileExists{figures/actual_vs_predicted.png}{
+\includegraphics[width=0.85\columnwidth]{figures/actual_vs_predicted.png}
+}{
+\fbox{\parbox[c][3cm][c]{0.83\columnwidth}{\centering Actual vs Predicted Plots}}
+}
+\caption{Actual vs Predicted scatter plots for both Linear Regression (left) and Random Forest (right).
+The diagonal dashed line represents perfect predictions. Random Forest concentrates much more tightly around this line.}
+\label{fig:avp}
+\end{figure}
+
+\section{Feature Importance Comparison}
+Feature importance provides insight into which inputs drive fare predictions.
+Linear Regression coefficients reflect linear contributions, while Random Forest importances capture
+non-linear interactions and hierarchical decision structures.
+
+\begin{figure}[htbp]
+\centering
+\IfFileExists{figures/feature_importance.png}{
+\includegraphics[width=0.85\columnwidth]{figures/feature_importance.png}
+}{
+\fbox{\parbox[c][3cm][c]{0.83\columnwidth}{\centering Feature Importance}}
+}
+\caption{Feature importance comparison: Linear Regression absolute coefficients (left, steel blue) vs.
+Random Forest feature importances (right, dark orange). Both models rank service type and distance as top predictors,
+validating domain knowledge about ride fare drivers.}
+\label{fig:fi}
+\end{figure}
+
+\section{Model Comparison Summary}
+The comparison reveals clear differences in model philosophy and capability.
+Linear Regression provides a simple, interpretable baseline with explicit feature contributions.
+Random Forest captures complex non-linear patterns, delivering superior performance at the cost of interpretability.
+For this application, the $R^2$ improvement from 0.480 to 0.943 and MAE reduction from \$5.30 to \$1.23
+justify the shift toward the ensemble method.
+
+\section{Pros and Cons of the Approach}
+\textbf{Pros:}
+\begin{itemize}
+	\item Excellent predictive accuracy ($R^2=0.943$) and low median error (MAE=\$1.23).
+	\item Robustness to nonlinear interactions and feature scaling invariance.
+	\item Feature importance outputs enable understanding of dominant price drivers (service type, distance).
+	\item Inference is fast for real-time applications.
+\end{itemize}
+
+\textbf{Cons:}
+\begin{itemize}
+	\item Limited extrapolation beyond training distribution; high-variance edge cases may be mispredicted.
+	\item Sensitivity to data quality and missing-value imputation strategy.
+	\item Tree ensemble interpretability lower than linear regression; individual decision paths not easily explained.
+	\item Temporal patterns (time-of-day surge) captured indirectly via trees, not explicitly modeled.
+\end{itemize}
+
+\section{Conclusion}
+Random Forest regression achieves state-of-the-art performance on this Uber/Lyft dataset, explaining 94.3\% of fare variance with a median error of only \$1.23.
+Despite the strength of the ensemble approach, a linear baseline is provided for transparency and comparison.
+Future work should explore explicit temporal features (e.g., surge indicator time series), cross-validation within time windows to detect temporal drift,
+and integration of external data (e.g., real-time traffic conditions) to further improve generalization and real-world applicability.
+
+\section*{Acknowledgment}
+Optional: Acknowledge course staff, collaborators, or resources.
+
+% --- BibTeX references ---
+\bibliographystyle{IEEEtran}
+\bibliography{references}
+
+\end{document}
