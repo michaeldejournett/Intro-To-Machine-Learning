@@ -8,7 +8,7 @@
 \usepackage{subcaption}
 \usepackage{booktabs}
 \usepackage{url}
-\usepackage{hyperref}
+\usepackage[hidelinks]{hyperref}
 
 % --- Paper metadata ---
 \title{Predicting Ride Fare Prices with Machine Learning\\
@@ -17,7 +17,7 @@
 \author{%
 \IEEEauthorblockN{Michael DeJournett}
 \IEEEauthorblockA{Intro to Machine Learning\\
-\texttt{your.email@example.com}}
+\texttt{mdejournett@uncc.edu}}
 }
 
 \begin{document}
@@ -32,7 +32,7 @@ quality using regression metrics and normalized confusion matrices.
 The best model (Random Forest) achieves MAE = \textbf{\$1.23}, RMSE = \textbf{\$2.22}, and $R^2=\textbf{0.943}$
 with a 95\% confidence interval for MAE of \textbf{[1.182, 1.268]}.
 Results indicate that Random Forest provides the best trade-off between accuracy,
-stability, and practical usability for this dataset, vastly outperforming the linear baseline.
+stability, and practical usability for this dataset, outperforming the linear baseline.
 \end{abstract}
 
 \begin{IEEEkeywords}
@@ -44,8 +44,13 @@ Fare prediction is useful for pricing transparency, dispatch planning, and custo
 This project compares baseline (linear) and ensemble regression models on Uber/Lyft trip data to estimate fares.
 Our final results are MAE = \textbf{\$1.23}, RMSE = \textbf{\$2.22}, and $R^2=\textbf{0.943}$,
 with 95\% confidence intervals computed via bootstrap resampling (500 iterations).
-Among the tested methods, Random Forest performs best and is selected as the final approach.
+Among the tested methods, Random Forest performs best and is selected as the final approach, consistent with prior findings that tree ensembles capture non-linear structure effectively \cite{breiman2001random,james2013isl,hastie2009elements}.
 The report concludes with model strengths/limitations and practical implications for real-world deployment.
+
+\section{Related Work}
+Random Forests are widely used for tabular prediction tasks with heterogeneous features and non-linear interactions \cite{breiman2001random}.
+Classical linear models remain useful as transparent baselines and diagnostic references \cite{james2013isl,hastie2009elements}.
+Motivated by this literature, we report both a linear baseline and an ensemble model, and evaluate each with the same train/test split and metric suite.
 
 \section{Problem Formulation}
 Let $\mathbf{x} \in \mathbb{R}^{14}$ denote trip features and $y \in \mathbb{R}$ denote fare amount (USD).
@@ -64,7 +69,7 @@ Two main models are compared:
 	\item \textbf{Linear Regression (Baseline):} Standard least-squares regression with StandardScaler normalization.
           Target: establish a simple interpretable baseline.
 	\item \textbf{Random Forest Regressor (Ensemble):} 30 trees, max depth 10, random state 42.
-          Designed to capture non-linear fare dependencies (e.g., surge effects, distance interactions).
+		  Designed to capture non-linear fare dependencies (e.g., distance-weather and location-time interactions).
 \end{itemize}
 No hyperparameter tuning was performed; parameters were chosen based on domain knowledge and
 computational efficiency for this dataset.
@@ -82,12 +87,12 @@ Confidence intervals (95\%) must be reported for at least one primary metric.
 \caption{Model Performance on Test Set with 95\% Confidence Intervals}
 \label{tab:results}
 \centering
-\begin{tabular}{lcccc}
+\begin{tabular}{lccc}
 \toprule
-Model & MAE (\$) & RMSE (\$) & $R^2$ & 95\% CI (MAE) \\
+Model & MAE (95\% CI) & RMSE (95\% CI) & $R^2$ (95\% CI) \\
 \midrule
-Linear Regression & 5.30 & 6.73 & 0.480 & [5.205, 5.396] \\
-Random Forest & \textbf{1.23} & \textbf{2.22} & \textbf{0.943} & [1.182, 1.268] \\
+Linear Regression & 5.30 [5.205, 5.396] & 6.73 [6.564, 6.908] & 0.480 [0.462, 0.495] \\
+Random Forest & \textbf{1.23 [1.182, 1.268]} & \textbf{2.22 [2.025, 2.376]} & \textbf{0.943 [0.936, 0.952]} \\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -166,7 +171,7 @@ justify the shift toward the ensemble method.
 \section{Pros and Cons of the Approach}
 \textbf{Pros:}
 \begin{itemize}
-	\item Excellent predictive accuracy ($R^2=0.943$) and low median error (MAE=\$1.23).
+	\item Strong predictive accuracy ($R^2=0.943$) and low mean absolute error (MAE=\$1.23).
 	\item Robustness to nonlinear interactions and feature scaling invariance.
 	\item Feature importance outputs enable understanding of dominant price drivers (service type, distance).
 	\item Inference is fast for real-time applications.
@@ -181,13 +186,19 @@ justify the shift toward the ensemble method.
 \end{itemize}
 
 \section{Conclusion}
-Random Forest regression achieves state-of-the-art performance on this Uber/Lyft dataset, explaining 94.3\% of fare variance with a median error of only \$1.23.
+Random Forest regression achieves the best performance among tested models on this Uber/Lyft dataset, explaining 94.3\% of fare variance with a mean absolute error of \$1.23.
 Despite the strength of the ensemble approach, a linear baseline is provided for transparency and comparison.
-Future work should explore explicit temporal features (e.g., surge indicator time series), cross-validation within time windows to detect temporal drift,
-and integration of external data (e.g., real-time traffic conditions) to further improve generalization and real-world applicability.
+Future work should explore repeated-split or temporal validation to quantify drift sensitivity,
+and integration of external data (e.g., real-time traffic conditions) to improve generalization.
+
+\section{Threats to Validity}
+The evaluation uses a single random 80/20 split, so reported performance may vary under different partitions.
+Confidence intervals are estimated via bootstrap resampling on test predictions; these intervals quantify predictive-sample variability and may underestimate full training uncertainty.
+The sampled subset (20,000 trips) may not capture all rare demand or weather regimes, and this can affect tail-error behavior.
+Finally, because surge multiplier fields are excluded, the model estimates fare primarily from trip context and weather proxies rather than direct dynamic-pricing signals.
 
 \section*{Acknowledgment}
-Optional: Acknowledge course staff, collaborators, or resources.
+Thanks to the Intro to Machine Learning course staff for project guidance and feedback.
 
 % --- BibTeX references ---
 \bibliographystyle{IEEEtran}
