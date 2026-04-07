@@ -30,7 +30,7 @@ Given 14 trip-level features (distance, time, location, vehicle type, and weathe
 We evaluate baseline Linear Regression and ensemble Random Forest models, report test-set performance with 95\% confidence intervals, and compare model
 quality using regression metrics and normalized confusion matrices.
 The best model (Random Forest) achieves MAE = \textbf{\$1.24}, RMSE = \textbf{\$2.26}, and $R^2=\textbf{0.942}$
-with a 95\% confidence interval for MAE of \textbf{[1.221, 1.275]}.
+with a 95\% confidence interval for MAE of \textbf{[1.237, 1.249]}.
 Results indicate that Random Forest provides the best trade-off between accuracy,
 stability, and practical usability for this dataset, outperforming the linear baseline.
 \end{abstract}
@@ -43,7 +43,7 @@ machine learning, regression, random forest, Uber, Lyft, fare prediction
 Fare prediction is useful for pricing transparency, dispatch planning, and customer experience.
 This project compares baseline (linear) and ensemble regression models on Uber/Lyft trip data to estimate fares.
 Our final results are MAE = \textbf{\$1.24}, RMSE = \textbf{\$2.26}, and $R^2=\textbf{0.942}$,
-with 95\% confidence intervals computed over repeated holdout splits.
+with 95\% confidence intervals computed from split-level standard deviations over repeated holdout runs.
 Among the tested methods, Random Forest performs best for this dataset and is selected as the final approach.
 The report concludes with model strengths/limitations and practical implications for real-world deployment.
 
@@ -84,8 +84,8 @@ Confidence intervals (95\%) must be reported for at least one primary metric.
 \toprule
 Model & MAE (95\% CI) & RMSE (95\% CI) & $R^2$ (95\% CI) \\
 \midrule
-Linear Regression & 5.35 [5.268, 5.436] & 6.81 [6.674, 6.925] & 0.474 [0.459, 0.489] \\
-Random Forest & \textbf{1.24 [1.221, 1.275]} & \textbf{2.26 [2.120, 2.348]} & \textbf{0.942 [0.937, 0.949]} \\
+Linear Regression & 5.35 [5.327, 5.370] & 6.81 [6.776, 6.849] & 0.474 [0.470, 0.477] \\
+Random Forest & \textbf{1.24 [1.237, 1.249]} & \textbf{2.26 [2.225, 2.286]} & \textbf{0.942 [0.941, 0.944]} \\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -200,7 +200,7 @@ and integration of external data (e.g., real-time traffic conditions) to improve
 
 \section{Threats to Validity}
 The evaluation uses repeated random holdout splits rather than a strict temporal split, so deployment-time drift effects may still be underrepresented.
-Confidence intervals are estimated from the distribution of split-level metrics, which improves partition robustness but can still underestimate broader data-generation uncertainty.
+Confidence intervals are estimated from split-level metric standard deviations under a normal approximation, which improves partition robustness but can still underestimate broader data-generation uncertainty.
 The sampled subset (20,000 trips) may not capture all rare demand or weather regimes, and this can affect tail-error behavior.
 Finally, because surge multiplier fields are excluded, the model estimates fare primarily from trip context and weather proxies rather than direct dynamic-pricing signals.
 

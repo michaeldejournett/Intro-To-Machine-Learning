@@ -120,10 +120,15 @@ def evaluate_model(name: str, y_true: pd.Series, preds: np.ndarray) -> dict:
     return {"Model": name, "MAE": mae, "RMSE": rmse, "R2": r2}
 
 
-def ci_from_distribution(values: list[float], low_q: float = 2.5, high_q: float = 97.5) -> tuple[float, float]:
+def ci_from_std(values: list[float], z_value: float = 1.96) -> tuple[float, float]:
     arr = np.asarray(values, dtype=float)
-    low, high = np.percentile(arr, [low_q, high_q])
-    return float(low), float(high)
+    mean_val = float(np.mean(arr))
+    if len(arr) < 2:
+        return mean_val, mean_val
+    std_val = float(np.std(arr, ddof=1))
+    se_val = std_val / np.sqrt(len(arr))
+    margin = z_value * se_val
+    return mean_val - margin, mean_val + margin
 
 
 def evaluate_repeated_holdout(
@@ -171,9 +176,9 @@ def evaluate_repeated_holdout(
         rmse_values = metric_store[model_name]["RMSE"]
         r2_values = metric_store[model_name]["R2"]
 
-        mae_ci = ci_from_distribution(mae_values)
-        rmse_ci = ci_from_distribution(rmse_values)
-        r2_ci = ci_from_distribution(r2_values)
+        mae_ci = ci_from_std(mae_values)
+        rmse_ci = ci_from_std(rmse_values)
+        r2_ci = ci_from_std(r2_values)
 
         rows.append(
             {
