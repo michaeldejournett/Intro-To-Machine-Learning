@@ -19,6 +19,10 @@ warnings.filterwarnings("ignore")
 plt.style.use("seaborn-v0_8")
 sns.set_context("talk")
 
+N_SPLITS = 20
+TEST_SIZE = 0.2
+BASE_RANDOM_STATE = 42
+
 ROOT_DIR = Path(__file__).resolve().parents[1]
 PROJECT_DIR = Path(__file__).resolve().parent
 PAPER_DIR = ROOT_DIR / "paper"
@@ -107,42 +111,86 @@ def prepare_data(rides: pd.DataFrame, weather: pd.DataFrame) -> tuple[pd.DataFra
     return X, y, features
 
 
-def bootstrap_metric_ci(
-    y_true: np.ndarray,
-    y_pred: np.ndarray,
-    metric_fn,
-    n_boot: int = 500,
-    random_state: int = 42,
-) -> tuple[float, float]:
-    rng = np.random.default_rng(random_state)
-    n = len(y_true)
-    stats = []
-    for _ in range(n_boot):
-        idx = rng.integers(0, n, n)
-        stats.append(metric_fn(y_true[idx], y_pred[idx]))
-    low, high = np.percentile(stats, [2.5, 97.5])
-    return float(low), float(high)
-
-
 def evaluate_model(name: str, y_true: pd.Series, preds: np.ndarray) -> dict:
     y_true_arr = np.asarray(y_true)
     mae = mean_absolute_error(y_true_arr, preds)
     rmse = np.sqrt(mean_squared_error(y_true_arr, preds))
     r2 = r2_score(y_true_arr, preds)
 
-    mae_ci = bootstrap_metric_ci(y_true_arr, preds, mean_absolute_error)
-    rmse_ci = bootstrap_metric_ci(y_true_arr, preds, lambda a, b: np.sqrt(mean_squared_error(a, b)))
-    r2_ci = bootstrap_metric_ci(y_true_arr, preds, r2_score)
+    return {"Model": name, "MAE": mae, "RMSE": rmse, "R2": r2}
 
-    return {
-        "Model": name,
-        "MAE": mae,
-        "MAE_CI": f"[{mae_ci[0]:.3f}, {mae_ci[1]:.3f}]",
-        "RMSE": rmse,
-        "RMSE_CI": f"[{rmse_ci[0]:.3f}, {rmse_ci[1]:.3f}]",
-        "R2": r2,
-        "R2_CI": f"[{r2_ci[0]:.3f}, {r2_ci[1]:.3f}]",
+
+def ci_from_distribution(values: list[float], low_q: float = 2.5, high_q: float = 97.5) -> tuple[float, float]:
+    arr = np.asarray(values, dtype=float)
+    low, high = np.percentile(arr, [low_q, high_q])
+    return float(low), float(high)
+
+
+def evaluate_repeated_holdout(
+    X: pd.DataFrame,
+    y: pd.Series,
+    n_splits: int = N_SPLITS,
+    test_size: float = TEST_SIZE,
+    base_random_state: int = BASE_RANDOM_STATE,
+) -> tuple[pd.DataFrame, tuple[pd.Series, np.ndarray, np.ndarray, np.ndarray, pd.Series, RandomForestRegressor]]:
+    metric_store = {
+        "Linear Regression": {"MAE": [], "RMSE": [], "R2": []},
+        "Random Forest": {"MAE": [], "RMSE": [], "R2": []},
     }
+    representative = None
+
+    for split_idx in range(n_splits):
+        split_seed = base_random_state + split_idx
+        X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=test_size, random_state=split_seed)
+
+        scaler = StandardScaler()
+        X_train_sc = scaler.fit_transform(X_train)
+        X_test_sc = scaler.transform(X_test)
+
+        lr_model = LinearRegression()
+        lr_model.fit(X_train_sc, y_train)
+        preds_lr = lr_model.predict(X_test_sc)
+
+        rf_model = RandomForestRegressor(n_estimators=30, max_depth=10, random_state=split_seed, n_jobs=-1)
+        rf_model.fit(X_train, y_train)
+        preds_rf = rf_model.predict(X_test)
+
+        lr_metrics = evaluate_model("Linear Regression", y_test, preds_lr)
+        rf_metrics = evaluate_model("Random Forest", y_test, preds_rf)
+
+        for metric_name in ["MAE", "RMSE", "R2"]:
+            metric_store["Linear Regression"][metric_name].append(float(lr_metrics[metric_name]))
+            metric_store["Random Forest"][metric_name].append(float(rf_metrics[metric_name]))
+
+        if split_idx == 0:
+            representative = (y_test, preds_lr, preds_rf, X_train_sc, y_train, rf_model)
+
+    rows = []
+    for model_name in ["Linear Regression", "Random Forest"]:
+        mae_values = metric_store[model_name]["MAE"]
+        rmse_values = metric_store[model_name]["RMSE"]
+        r2_values = metric_store[model_name]["R2"]
+
+        mae_ci = ci_from_distribution(mae_values)
+        rmse_ci = ci_from_distribution(rmse_values)
+        r2_ci = ci_from_distribution(r2_values)
+
+        rows.append(
+            {
+                "Model": model_name,
+                "MAE": float(np.mean(mae_values)),
+                "MAE_CI": f"[{mae_ci[0]:.3f}, {mae_ci[1]:.3f}]",
+                "RMSE": float(np.mean(rmse_values)),
+                "RMSE_CI": f"[{rmse_ci[0]:.3f}, {rmse_ci[1]:.3f}]",
+                "R2": float(np.mean(r2_values)),
+                "R2_CI": f"[{r2_ci[0]:.3f}, {r2_ci[1]:.3f}]",
+            }
+        )
+
+    if representative is None:
+        raise RuntimeError("No representative split generated; check n_splits setting.")
+
+    return pd.DataFrame(rows), representative
 
 
 def plot_actual_vs_predicted(y_test: pd.Series, preds_lr: np.ndarray, preds_rf: np.ndarray) -> None:
@@ -226,28 +274,13 @@ def main() -> None:
 
     X, y, features = prepare_data(rides, weather)
 
-    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
-    print(f"Train: {X_train.shape[0]:,} | Test: {X_test.shape[0]:,}")
-
-    scaler = StandardScaler()
-    X_train_sc = scaler.fit_transform(X_train)
-    X_test_sc = scaler.transform(X_test)
-
-    lr_model = LinearRegression()
-    lr_model.fit(X_train_sc, y_train)
-    preds_lr = lr_model.predict(X_test_sc)
-
-    rf_model = RandomForestRegressor(n_estimators=30, max_depth=10, random_state=42, n_jobs=-1)
-    rf_model.fit(X_train, y_train)
-    preds_rf = rf_model.predict(X_test)
-
-    metrics_lr = evaluate_model("Linear Regression", y_test, preds_lr)
-    metrics_rf = evaluate_model("Random Forest", y_test, preds_rf)
-    metrics_df = pd.DataFrame([metrics_lr, metrics_rf])
+    metrics_df, representative = evaluate_repeated_holdout(X, y)
+    y_test, preds_lr, preds_rf, X_train_sc, y_train, rf_model = representative
     metrics_df.to_csv(PROJECT_DIR / "paper_metrics_with_ci.csv", index=False)
 
     best_row = metrics_df.sort_values("MAE").iloc[0]
     print("\n=== METRICS FOR REPORT ===")
+    print(f"Evaluation strategy: repeated holdout ({N_SPLITS} splits, {int((1 - TEST_SIZE) * 100)}/{int(TEST_SIZE * 100)} train/test)")
     print(metrics_df.to_string(index=False))
     print(f"\nBest Model: {best_row['Model']}")
 

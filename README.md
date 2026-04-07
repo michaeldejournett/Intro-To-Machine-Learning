@@ -19,6 +19,15 @@ Run the following from the project root:
 ```bash
 cd paper
 pdflatex ieee_paper_template.tex
+pdflatex ieee_paper_template.tex
+pdflatex ieee_paper_template.tex
+```
+
+Use `bibtex` only if the paper includes bibliography commands/citations:
+
+```bash
+cd paper
+pdflatex ieee_paper_template.tex
 bibtex ieee_paper_template
 pdflatex ieee_paper_template.tex
 pdflatex ieee_paper_template.tex
@@ -57,10 +66,17 @@ Suggested full build flow:
 python project/uber_lyft_regression.py
 cd paper
 pdflatex ieee_paper_template.tex
-bibtex ieee_paper_template
 pdflatex ieee_paper_template.tex
 pdflatex ieee_paper_template.tex
 ```
+
+If bibliography is enabled (e.g., `\\cite{...}` plus bibliography commands in the `.tex`), insert:
+
+```bash
+bibtex ieee_paper_template
+```
+
+between the first and second `pdflatex` runs.
 
 ### If `IEEEtran.cls` is missing
 

@@ -17,7 +17,7 @@
 \author{%
 \IEEEauthorblockN{Michael DeJournett}
 \IEEEauthorblockA{Intro to Machine Learning\\
-\texttt{mdejournett@uncc.edu}}
+\texttt{mdejournett2@unl.edu}}
 }
 
 \begin{document}
@@ -25,12 +25,12 @@
 \maketitle
 
 \begin{abstract}
-This two-page report studies ride fare prediction for Uber and Lyft trips using supervised learning.
+This report studies ride fare prediction for Uber and Lyft trips using supervised learning.
 Given 14 trip-level features (distance, time, location, vehicle type, and weather conditions), the goal is to predict fare amount.
 We evaluate baseline Linear Regression and ensemble Random Forest models, report test-set performance with 95\% confidence intervals, and compare model
 quality using regression metrics and normalized confusion matrices.
-The best model (Random Forest) achieves MAE = \textbf{\$1.23}, RMSE = \textbf{\$2.22}, and $R^2=\textbf{0.943}$
-with a 95\% confidence interval for MAE of \textbf{[1.182, 1.268]}.
+The best model (Random Forest) achieves MAE = \textbf{\$1.24}, RMSE = \textbf{\$2.26}, and $R^2=\textbf{0.942}$
+with a 95\% confidence interval for MAE of \textbf{[1.221, 1.275]}.
 Results indicate that Random Forest provides the best trade-off between accuracy,
 stability, and practical usability for this dataset, outperforming the linear baseline.
 \end{abstract}
@@ -42,26 +42,19 @@ machine learning, regression, random forest, Uber, Lyft, fare prediction
 \section{Introduction}
 Fare prediction is useful for pricing transparency, dispatch planning, and customer experience.
 This project compares baseline (linear) and ensemble regression models on Uber/Lyft trip data to estimate fares.
-Our final results are MAE = \textbf{\$1.23}, RMSE = \textbf{\$2.22}, and $R^2=\textbf{0.943}$,
-with 95\% confidence intervals computed via bootstrap resampling (500 iterations).
-Among the tested methods, Random Forest performs best and is selected as the final approach, consistent with prior findings that tree ensembles capture non-linear structure effectively \cite{breiman2001random,james2013isl,hastie2009elements}.
+Our final results are MAE = \textbf{\$1.24}, RMSE = \textbf{\$2.26}, and $R^2=\textbf{0.942}$,
+with 95\% confidence intervals computed over repeated holdout splits.
+Among the tested methods, Random Forest performs best for this dataset and is selected as the final approach.
 The report concludes with model strengths/limitations and practical implications for real-world deployment.
 
-\section{Related Work}
-Random Forests are widely used for tabular prediction tasks with heterogeneous features and non-linear interactions \cite{breiman2001random}.
-Classical linear models remain useful as transparent baselines and diagnostic references \cite{james2013isl,hastie2009elements}.
-Motivated by this literature, we report both a linear baseline and an ensemble model, and evaluate each with the same train/test split and metric suite.
-
 \section{Problem Formulation}
-Let $\mathbf{x} \in \mathbb{R}^{14}$ denote trip features and $y \in \mathbb{R}$ denote fare amount (USD).
-The learning task is to estimate a function $f$ such that:
-\begin{equation}
-\hat{y} = f(\mathbf{x}), \quad \text{with objective } \min_f\; \mathbb{E}[\ell(y,\hat{y})].
-\end{equation}
-Inputs include distance (miles), temporal features (hour, day-of-week, month), location encodings (source, destination),
-vehicle type (cab type, service name), and weather conditions (temperature, humidity, wind, pressure, rain, clouds).
-Output is fare price. Data splits: 80\% train, 20\% test. Preprocessing included median imputation for weather and
-Label Encoding for categorical features; no scaling was applied to Random Forest.
+The task is to predict ride fare price (USD) from 14 trip and context features.
+Inputs include distance (miles), time features (hour, day of week, month), pickup and drop-off locations,
+vehicle type information (cab type and service name), and weather conditions (temperature, humidity, wind, pressure, rain, and clouds).
+The target is the trip fare price.
+Data was evaluated with repeated 80\%/20\% train-test holdout splits (20 runs).
+Preprocessing used median imputation for missing weather values and label encoding for categorical features.
+Feature scaling was used for Linear Regression but not for Random Forest.
 
 \section{Models}
 Two main models are compared:
@@ -84,15 +77,15 @@ Primary regression metrics:
 Confidence intervals (95\%) must be reported for at least one primary metric.
 
 \begin{table}[htbp]
-\caption{Model Performance on Test Set with 95\% Confidence Intervals}
+\caption{Model Performance with Repeated Holdout (20 Splits) and 95\% Confidence Intervals}
 \label{tab:results}
 \centering
 \begin{tabular}{lccc}
 \toprule
 Model & MAE (95\% CI) & RMSE (95\% CI) & $R^2$ (95\% CI) \\
 \midrule
-Linear Regression & 5.30 [5.205, 5.396] & 6.73 [6.564, 6.908] & 0.480 [0.462, 0.495] \\
-Random Forest & \textbf{1.23 [1.182, 1.268]} & \textbf{2.22 [2.025, 2.376]} & \textbf{0.943 [0.936, 0.952]} \\
+Linear Regression & 5.35 [5.268, 5.436] & 6.81 [6.674, 6.925] & 0.474 [0.459, 0.489] \\
+Random Forest & \textbf{1.24 [1.221, 1.275]} & \textbf{2.26 [2.120, 2.348]} & \textbf{0.942 [0.937, 0.949]} \\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -165,43 +158,53 @@ validating domain knowledge about ride fare drivers.}
 The comparison reveals clear differences in model philosophy and capability.
 Linear Regression provides a simple, interpretable baseline with explicit feature contributions.
 Random Forest captures complex non-linear patterns, delivering superior performance at the cost of interpretability.
-For this application, the $R^2$ improvement from 0.480 to 0.943 and MAE reduction from \$5.30 to \$1.23
+For this application, the $R^2$ improvement from 0.474 to 0.942 and MAE reduction from \$5.35 to \$1.24
 justify the shift toward the ensemble method.
 
-\section{Pros and Cons of the Approach}
+\section{Pros and Cons by Model}
+\textbf{Linear Regression (Baseline)}
+
 \textbf{Pros:}
 \begin{itemize}
-	\item Strong predictive accuracy ($R^2=0.943$) and low mean absolute error (MAE=\$1.23).
-	\item Robustness to nonlinear interactions and feature scaling invariance.
-	\item Feature importance outputs enable understanding of dominant price drivers (service type, distance).
-	\item Inference is fast for real-time applications.
+	\item Simple and easy to interpret.
+	\item Fast to train and evaluate.
+	\item Useful as a transparent baseline for comparison.
 \end{itemize}
 
 \textbf{Cons:}
 \begin{itemize}
-	\item Limited extrapolation beyond training distribution; high-variance edge cases may be mispredicted.
-	\item Sensitivity to data quality and missing-value imputation strategy.
-	\item Tree ensemble interpretability lower than linear regression; individual decision paths not easily explained.
-	\item Temporal patterns (time-of-day surge) captured indirectly via trees, not explicitly modeled.
+	\item Lower predictive performance on this dataset (MAE = \$5.35, $R^2$ = 0.474).
+	\item Cannot capture complex non-linear interactions as effectively.
+\end{itemize}
+
+\textbf{Random Forest (Ensemble)}
+
+\textbf{Pros:}
+\begin{itemize}
+	\item Best predictive performance on this dataset (MAE = \$1.24, $R^2$ = 0.942).
+	\item Captures non-linear interactions between features.
+	\item Less sensitive to feature scaling.
+\end{itemize}
+
+\textbf{Cons:}
+\begin{itemize}
+	\item Harder to interpret than Linear Regression.
+	\item Can be sensitive to data quality and sampling effects.
 \end{itemize}
 
 \section{Conclusion}
-Random Forest regression achieves the best performance among tested models on this Uber/Lyft dataset, explaining 94.3\% of fare variance with a mean absolute error of \$1.23.
+Random Forest regression achieves the best performance among tested models on this Uber/Lyft dataset, explaining 94.2\% of fare variance with a mean absolute error of \$1.24.
 Despite the strength of the ensemble approach, a linear baseline is provided for transparency and comparison.
-Future work should explore repeated-split or temporal validation to quantify drift sensitivity,
+Future work should explore temporal validation to quantify drift sensitivity,
 and integration of external data (e.g., real-time traffic conditions) to improve generalization.
 
 \section{Threats to Validity}
-The evaluation uses a single random 80/20 split, so reported performance may vary under different partitions.
-Confidence intervals are estimated via bootstrap resampling on test predictions; these intervals quantify predictive-sample variability and may underestimate full training uncertainty.
+The evaluation uses repeated random holdout splits rather than a strict temporal split, so deployment-time drift effects may still be underrepresented.
+Confidence intervals are estimated from the distribution of split-level metrics, which improves partition robustness but can still underestimate broader data-generation uncertainty.
 The sampled subset (20,000 trips) may not capture all rare demand or weather regimes, and this can affect tail-error behavior.
 Finally, because surge multiplier fields are excluded, the model estimates fare primarily from trip context and weather proxies rather than direct dynamic-pricing signals.
 
 \section*{Acknowledgment}
 Thanks to the Intro to Machine Learning course staff for project guidance and feedback.
-
-% --- BibTeX references ---
-\bibliographystyle{IEEEtran}
-\bibliography{references}
 
 \end{document}

@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.25 (TeX Live 2023/Debian) (preloaded format=pdflatex 2026.4.2)  7 APR 2026 12:38
+This is pdfTeX, Version 3.141592653-2.6-1.40.25 (TeX Live 2023/Debian) (preloaded format=pdflatex 2026.4.2)  7 APR 2026 13:38
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -505,42 +505,39 @@ LaTeX Font Info:    Trying to load font information for U+msb on input line 32.
 (/usr/share/texlive/texmf-dist/tex/latex/amsfonts/umsb.fd
 File: umsb.fd 2013/01/14 v3.01 AMS symbols B
 )
-Overfull \hbox (49.0954pt too wide) in paragraph at lines 90--98
+Overfull \hbox (49.0954pt too wide) in paragraph at lines 83--91
  [][] 
  []
 
-<figures/normalized_confusion_matrix_lr.png, id=62, 468.7914pt x 334.1283pt>
+<figures/normalized_confusion_matrix_lr.png, id=48, 468.7914pt x 334.1283pt>
 File: figures/normalized_confusion_matrix_lr.png Graphic file (type png)
 <use figures/normalized_confusion_matrix_lr.png>
 Package pdftex.def Info: figures/normalized_confusion_matrix_lr.png  used on in
-put line 116.
+put line 109.
 (pdftex.def)             Requested size: 113.39923pt x 80.82462pt.
-<figures/normalized_confusion_matrix_rf.png, id=64, 468.7914pt x 334.1283pt>
+<figures/normalized_confusion_matrix_rf.png, id=50, 468.7914pt x 334.1283pt>
 File: figures/normalized_confusion_matrix_rf.png Graphic file (type png)
 <use figures/normalized_confusion_matrix_rf.png>
 Package pdftex.def Info: figures/normalized_confusion_matrix_rf.png  used on in
-put line 124.
+put line 117.
 (pdftex.def)             Requested size: 113.39923pt x 80.82462pt.
-<figures/actual_vs_predicted.png, id=65, 986.4855pt x 334.3692pt>
+<figures/actual_vs_predicted.png, id=51, 986.4855pt x 334.3692pt>
 File: figures/actual_vs_predicted.png Graphic file (type png)
 <use figures/actual_vs_predicted.png>
-Package pdftex.def Info: figures/actual_vs_predicted.png  used on input line 14
-0.
+Package pdftex.def Info: figures/actual_vs_predicted.png  used on input line 13
+3.
 (pdftex.def)             Requested size: 214.20154pt x 72.60226pt.
+<figures/feature_importance.png, id=52, 987.4491pt x 406.3983pt>
+File: figures/feature_importance.png Graphic file (type png)
+<use figures/feature_importance.png>
+Package pdftex.def Info: figures/feature_importance.png  used on input line 150
+.
+(pdftex.def)             Requested size: 214.20154pt x 88.15527pt.
 [1{/var/lib/texmf/fonts/map/pdftex/updmap/pdftex.map}{/usr/share/texlive/texmf-
 dist/fonts/enc/dvips/base/8r.enc}
 
 
 ]
-<figures/feature_importance.png, id=93, 987.4491pt x 406.3983pt>
-File: figures/feature_importance.png Graphic file (type png)
-<use figures/feature_importance.png>
-Package pdftex.def Info: figures/feature_importance.png  used on input line 157
-.
-(pdftex.def)             Requested size: 214.20154pt x 88.15527pt.
- (./ieee_paper_template.bbl [2 <./figures/normalized_confusion_matrix_lr.png> <
-./figures/normalized_confusion_matrix_rf.png> <./figures/actual_vs_predicted.pn
-g> <./figures/feature_importance.png>])
 
 ** Conference Paper **
 Before submitting the final camera ready copy, remember to:
@@ -552,44 +549,39 @@ Before submitting the final camera ready copy, remember to:
  uses only Type 1 fonts and that every step in the generation
  process uses the appropriate paper size.
 
-[3
-
-] (./ieee_paper_template.aux)
+[2 <./figures/normalized_confusion_matrix_lr.png> <./figures/normalized_confusi
+on_matrix_rf.png> <./figures/actual_vs_predicted.png> <./figures/feature_import
+ance.png>] (./ieee_paper_template.aux)
  ***********
 LaTeX2e <2023-11-01> patch level 1
 L3 programming layer <2024-01-22>
  ***********
 Package rerunfilecheck Info: File `ieee_paper_template.out' has not changed.
-(rerunfilecheck)             Checksum: 8FEA5F3F801EBB93076D1DE80ABC5570;2103.
+(rerunfilecheck)             Checksum: 0D87AD658638C68AEDA2B22A16D55E77;1862.
  ) 
 Here is how much of TeX's memory you used:
- 12306 strings out of 476182
- 195961 string characters out of 5795596
- 1950975 words of memory out of 5000000
- 34122 multiletter control sequences out of 15000+600000
- 672747 words of font info for 162 fonts, out of 8000000 for 9000
+ 12269 strings out of 476182
+ 195341 string characters out of 5795596
+ 1951975 words of memory out of 5000000
+ 34101 multiletter control sequences out of 15000+600000
+ 670063 words of font info for 156 fonts, out of 8000000 for 9000
  14 hyphenation exceptions out of 8191
  75i,9n,79p,430b,501s stack positions out of 10000i,1000n,20000p,200000b,200000s
-</usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmbx10.pfb></us
-r/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi10.pfb></usr/shar
-e/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi7.pfb></usr/share/texli
-ve/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi8.pfb></usr/share/texlive/texm
-f-dist/fonts/type1/public/amsfonts/cm/cmmi9.pfb></usr/share/texlive/texmf-dist/
-fonts/type1/public/amsfonts/cm/cmr10.pfb></usr/share/texlive/texmf-dist/fonts/t
-ype1/public/amsfonts/cm/cmr6.pfb></usr/share/texlive/texmf-dist/fonts/type1/pub
-lic/amsfonts/cm/cmr7.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/amsf
-onts/cm/cmr9.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/
-cmsy10.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy7.
-pfb></usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/symbols/msbm10.p
-fb></usr/share/texlive/texmf-dist/fonts/type1/urw/courier/ucrr8a.pfb></usr/shar
-e/texlive/texmf-dist/fonts/type1/urw/times/utmb8a.pfb></usr/share/texlive/texmf
--dist/fonts/type1/urw/times/utmbi8a.pfb></usr/share/texlive/texmf-dist/fonts/ty
-pe1/urw/times/utmr8a.pfb></usr/share/texlive/texmf-dist/fonts/type1/urw/times/u
-tmri8a.pfb>
-Output written on ieee_paper_template.pdf (3 pages, 1138738 bytes).
+</usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi10.pfb></us
+r/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi8.pfb></usr/share
+/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi9.pfb></usr/share/texliv
+e/texmf-dist/fonts/type1/public/amsfonts/cm/cmr10.pfb></usr/share/texlive/texmf
+-dist/fonts/type1/public/amsfonts/cm/cmr6.pfb></usr/share/texlive/texmf-dist/fo
+nts/type1/public/amsfonts/cm/cmr7.pfb></usr/share/texlive/texmf-dist/fonts/type
+1/public/amsfonts/cm/cmr9.pfb></usr/share/texlive/texmf-dist/fonts/type1/public
+/amsfonts/cm/cmsy7.pfb></usr/share/texlive/texmf-dist/fonts/type1/urw/courier/u
+crr8a.pfb></usr/share/texlive/texmf-dist/fonts/type1/urw/times/utmb8a.pfb></usr
+/share/texlive/texmf-dist/fonts/type1/urw/times/utmbi8a.pfb></usr/share/texlive
+/texmf-dist/fonts/type1/urw/times/utmr8a.pfb>
+Output written on ieee_paper_template.pdf (2 pages, 1095141 bytes).
 PDF statistics:
- 191 PDF objects out of 1000 (max. 8388607)
- 142 compressed objects within 2 object streams
- 27 named destinations out of 1000 (max. 500000)
- 125 words of extra memory for PDF output out of 10000 (max. 10000000)
+ 143 PDF objects out of 1000 (max. 8388607)
+ 105 compressed objects within 2 object streams
+ 20 named destinations out of 1000 (max. 500000)
+ 109 words of extra memory for PDF output out of 10000 (max. 10000000)
 
