@@ -15,9 +15,9 @@
 \large Uber \& Lyft Regression Analysis}
 
 \author{%
-\IEEEauthorblockN{Michael DeJournett}
+\IEEEauthorblockN{Michael DeJournett, Hugh Strumberger}
 \IEEEauthorblockA{Intro to Machine Learning\\
-\texttt{mdejournett2@unl.edu}}
+\texttt{mdejournett2@unl.edu, hstrumberger2@unl.edu}}
 }
 
 \begin{document}
@@ -52,7 +52,7 @@ The task is to predict ride fare price (USD) from 14 trip and context features.
 Inputs include distance (miles), time features (hour, day of week, month), pickup and drop-off locations,
 vehicle type information (cab type and service name), and weather conditions (temperature, humidity, wind, pressure, rain, and clouds).
 The target is the trip fare price.
-Data was evaluated with repeated 80\%/20\% train-test holdout splits (20 runs).
+Data was evaluated with repeated 80\%/20\% train-test holdout splits (20 runs). A 20,000-row subset of the dataset was used to balance computational efficiency with statistical stability during repeated evaluation. Repeated holdout evaluation used deterministic random seeds ranging from 42 to 61 for reproducibility across experiments.
 Preprocessing used median imputation for missing weather values and label encoding for categorical features.
 Feature scaling was used for Linear Regression but not for Random Forest.
 
