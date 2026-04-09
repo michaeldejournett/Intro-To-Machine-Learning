@@ -1,0 +1,10 @@
+# local env
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+.DS_Store
+
+# trained weights (regenerate with run_project.py)
+artifacts/*.pt
+artifacts/*.pkl
