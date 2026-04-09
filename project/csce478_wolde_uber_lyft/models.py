@@ -1,4 +1,4 @@
-"""Two feed-forward architectures for tabular classification."""
+"""Two MLP classifiers (shallow vs deeper + batch norm)."""
 
 from __future__ import annotations
 
@@ -7,7 +7,7 @@ from torch import nn
 
 
 class ShallowMLP(nn.Module):
-    """Two hidden layers, moderate width (baseline)."""
+    """2 hidden layers; fewer params than the deep model."""
 
     def __init__(self, n_features: int, n_classes: int, hidden: int = 128, dropout: float = 0.2):
         super().__init__()
@@ -26,7 +26,7 @@ class ShallowMLP(nn.Module):
 
 
 class DeepBatchNormMLP(nn.Module):
-    """Deeper stack with batch normalization between layers."""
+    """More layers + batch norm (see widths in code)."""
 
     def __init__(
         self,

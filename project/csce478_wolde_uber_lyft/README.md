@@ -1,78 +1,80 @@
-# Uber / Lyft price bins (ML project)
+# Uber / Lyft price bins — CSCE 478
 
-**Ermias Wolde · CSCE 478**
+**Ermias Wolde**
 
-Predicts which **price quintile** a ride is in (5 classes) using ride details plus **weather** matched by neighborhood and time.  
-Dataset: [Uber & Lyft Cab prices](https://www.kaggle.com/datasets/ravi72munde/uber-lyft-cab-prices) (Kaggle).
+Kaggle dataset: [Uber & Lyft Cab prices](https://www.kaggle.com/datasets/ravi72munde/uber-lyft-cab-prices).
 
-## What’s in the repo
+**What it does:** Instead of predicting exact fare in dollars, the code puts each ride into **1 of 5 price buckets** (quintiles). That way we can use accuracy, F1, and confusion matrices like the project asked. Features are ride stuff (distance, surge, cab type, etc.) plus **weather** joined by neighborhood and time.
 
-| File | Role |
-|------|------|
-| `run_project.py` | Full pipeline: load data → preprocess → train 2 neural nets → metrics + figures |
-| `data_loader.py` | Merge `cab_rides.csv` + `weather.csv` |
-| `preprocess.py` | Cleaning, labels, train/val/test split |
-| `models.py` | Shallow MLP vs deeper batch-norm MLP |
-| `train.py` | PyTorch training + early stopping |
-| `evaluate.py` | Bootstrap CIs + normalized confusion matrices |
-| `generate_report_snippets.py` | Writes `report/generated_metrics.tex` for the IEEE write-up |
-| `download_data.py` | Pulls the Kaggle dataset (needs internet once) |
-| `report/ieee_report.tex` | IEEE-style report (needs `IEEEtran` + `pdflatex`) |
+## Files (quick map)
+
+| File | What it does |
+|------|----------------|
+| `run_project.py` | Main script — run this |
+| `data_loader.py` | Loads cab + weather, merges them |
+| `preprocess.py` | Cleaning, one-hot, splits |
+| `models.py` | Two PyTorch MLPs |
+| `train.py` | Training loop |
+| `evaluate.py` | Bootstrap CIs + confusion matrix plots |
+| `generate_report_snippets.py` | Puts numbers into `report/generated_metrics.tex` |
+| `download_data.py` | Downloads from Kaggle if you don’t have the CSVs |
+| `build_report.sh` | Runs `pdflatex` on the IEEE report |
 
 ## Setup
 
 ```bash
 python3 -m venv .venv
-source .venv/bin/activate   # Windows: .venv\Scripts\activate
+source .venv/bin/activate
 pip install -r requirements.txt
 ```
 
 ## Data
 
-**Option A — automatic (recommended):**
+Either:
 
 ```bash
 python download_data.py
 ```
 
-**Option B — manual:** unzip Kaggle’s files into a `data/` folder next to these scripts:
+Or put `cab_rides.csv` and `weather.csv` in a `data/` folder next to the scripts. You can also set `UBER_LYFT_DATA_DIR` to another folder.
 
-```
-data/cab_rides.csv
-data/weather.csv
-```
-
-You can also point elsewhere: `export UBER_LYFT_DATA_DIR=/path/to/folder`
-
-## Run
+## Train + metrics
 
 ```bash
 python run_project.py
 ```
 
-Optional: use fewer rows for a quick test: `MAX_SAMPLES=50000 python run_project.py`
+Faster debug run: `MAX_SAMPLES=50000 python run_project.py`
 
-Outputs:
+That writes `artifacts/summary_for_report.json` and confusion matrix PDFs under `report/figures/`.
 
-- `artifacts/summary_for_report.json` — numbers for your report  
-- `report/figures/confusion_norm_*.pdf` — normalized confusion matrices  
-
-Then update the LaTeX metrics file:
+Then:
 
 ```bash
 python generate_report_snippets.py
 ```
 
-Build the PDF (if you have LaTeX):
+## PDF report (LaTeX)
+
+I used BasicTeX on a Mac:
 
 ```bash
-pdflatex -output-directory=report report/ieee_report.tex
+brew install --cask basictex
+eval "$(/usr/libexec/path_helper)"
+sudo /Library/TeX/texbin/tlmgr update --self
+sudo /Library/TeX/texbin/tlmgr install ieeetran collection-fontsrecommended
 ```
 
-Or upload `report/` to **Overleaf** with the [IEEE conference template](https://www.ieee.org/conferences/publishing/templates) and drop in `IEEEtran.cls` if needed.
+Then from this folder:
 
-## Before you submit
+```bash
+python generate_report_snippets.py
+chmod +x build_report.sh
+./build_report.sh
+```
 
-1. **PDF:** Run `python run_project.py`, then `python generate_report_snippets.py`, then compile `report/ieee_report.tex` so tables and text match your latest numbers.  
-2. **Course rules:** Add school / semester if your syllabus asks for it (only the report line was set to **Ermias Wolde** and **CSCE 478**).  
-3. Zip or push `*.py`, `requirements.txt`, `report/`, and `artifacts/summary_for_report.json` if the grader should see metrics without re-running training.
+Output: `report/ieee_report.pdf`. If LaTeX is annoying, Overleaf + IEEE template works too.
+
+## Submit
+
+Whatever your syllabus says — usually the `.py` files, `requirements.txt`, the PDF, and maybe `artifacts/summary_for_report.json` so they don’t have to re-train.

@@ -1,4 +1,4 @@
-"""Bootstrap confidence intervals, confusion matrices, and figures."""
+"""Bootstrap CIs for acc / macro-F1 and save confusion matrix PDFs."""
 
 from __future__ import annotations
 

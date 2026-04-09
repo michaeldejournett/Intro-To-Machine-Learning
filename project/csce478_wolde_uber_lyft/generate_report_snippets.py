@@ -1,4 +1,4 @@
-"""Write LaTeX snippets from artifacts/summary_for_report.json for the IEEE report."""
+"""Reads summary JSON and writes generated_metrics.tex for the paper."""
 
 from __future__ import annotations
 
@@ -15,7 +15,7 @@ def fmt(x: float) -> str:
 def main() -> None:
     src = cfg.ARTIFACTS_DIR / "summary_for_report.json"
     if not src.exists():
-        raise SystemExit(f"Run run_project.py first; missing {src}")
+        raise SystemExit(f"Can't find {src} — run python run_project.py first.")
     with open(src) as f:
         data = json.load(f)
 

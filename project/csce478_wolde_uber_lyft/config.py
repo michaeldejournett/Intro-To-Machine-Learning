@@ -1,4 +1,4 @@
-"""Paths and hyperparameters for the Uber/Lyft price-bin classification project."""
+"""Paths, hyperparameters, and where to find the Kaggle CSVs."""
 
 from __future__ import annotations
 

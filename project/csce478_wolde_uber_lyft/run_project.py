@@ -1,9 +1,4 @@
-"""
-End-to-end pipeline: load → preprocess → train two DL models → evaluate.
-
-Place Kaggle files under DATA_DIR (see config.py) or run with kagglehub once
-so cab_rides.csv and weather.csv exist.
-"""
+"""Loads data, trains two MLPs, saves metrics and confusion matrix figures."""
 
 from __future__ import annotations
 

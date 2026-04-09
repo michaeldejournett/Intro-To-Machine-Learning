@@ -1,1 +1,7 @@
 **/.venv/
+**/__pycache__/
+*.pyc
+project/**/report/*.aux
+project/**/report/*.log
+project/**/report/*.out
+project/**/report/*.synctex.gz

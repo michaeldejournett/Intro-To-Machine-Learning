@@ -1,4 +1,4 @@
-"""Download the Kaggle dataset into the default kagglehub cache (requires network)."""
+"""Downloads the Kaggle zip via kagglehub (needs internet)."""
 
 from __future__ import annotations
 

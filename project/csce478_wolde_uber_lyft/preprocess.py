@@ -1,4 +1,4 @@
-"""Feature matrix and price quantile labels for classification."""
+"""Cleaning, one-hot + scaling, and stratified splits."""
 
 from __future__ import annotations
 

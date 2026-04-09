@@ -1,12 +1,10 @@
-% Compile with pdflatex (needs IEEEtran.cls from IEEE conference template package).
-% https://www.ieee.org/conferences/publishing/templates
+% IEEE conference style. Needs IEEEtran.cls (tlmgr install ieeetran or Overleaf).
 \documentclass[conference]{IEEEtran}
 \usepackage{cite}
 \usepackage{graphicx}
 \usepackage{amsmath,amssymb}
 \usepackage{booktabs}
 \usepackage{url}
-% After running: python run_project.py && python generate_report_snippets.py
 \IfFileExists{generated_metrics.tex}{\input{generated_metrics}}{%
 \newcommand{\ShallowMLPAcc}{--}\newcommand{\ShallowMLPAccLo}{--}\newcommand{\ShallowMLPAccHi}{--}%
 \newcommand{\ShallowMLPFone}{--}\newcommand{\ShallowMLPFoneLo}{--}\newcommand{\ShallowMLPFoneHi}{--}%
@@ -16,43 +14,43 @@
 
 \begin{document}
 
-\title{Quantile Price-Bin Classification for Uber and Lyft Rides with Weather Features}
+\title{Classifying Uber and Lyft Rides into Price Quintiles Using Weather-Enhanced Features}
 
 \author{\IEEEauthorblockN{Ermias Wolde}\IEEEauthorblockA{CSCE 478 --- ML Project}}
 
 \maketitle
 
 \begin{abstract}
-We predict discrete \emph{price bins} for Boston-area Uber and Lyft rides by merging cab records with nearest-in-time weather readings by neighborhood. Two PyTorch feed-forward classifiers---a two-hidden-layer multilayer perceptron (MLP) and a deeper MLP with batch normalization---are trained on engineered numeric and one-hot categorical features. Test-set accuracy and macro-F1 are reported with bootstrap $95\%$ confidence intervals (CIs), alongside row-normalized confusion matrices. The deeper model typically achieves slightly better discrimination among bins; exact numbers are filled automatically from the training run (\ShallowMLPAcc{} vs.\ \DeepBatchNormMLPAcc{} accuracy with CIs [\ShallowMLPAccLo{}, \ShallowMLPAccHi{}] and [\DeepBatchNormMLPAccLo{}, \DeepBatchNormMLPAccHi{}]).
+We use the Kaggle \emph{Uber \& Lyft Cab prices} dataset (Boston-area rides). Instead of predicting exact dollars, we predict five \emph{price quintile} classes (0--4) so we can use confusion matrices like the project requires. Weather is merged to each ride by pickup neighborhood and closest timestamp. Two PyTorch MLPs are compared: a smaller two-layer net and a deeper one with batch normalization. We report test accuracy and macro-F1 with bootstrap $95\%$ CIs and row-normalized confusion matrices. Sample test accuracies from our run: \ShallowMLPAcc{} (shallow) vs.\ \DeepBatchNormMLPAcc{} (deep); the table lists CIs.
 \end{abstract}
 
 \begin{IEEEkeywords}
-Tabular classification, multilayer perceptron, batch normalization, bootstrap, confusion matrix.
+Classification, neural network, Uber, Lyft, weather data, confusion matrix.
 \end{IEEEkeywords}
 
 \section{Introduction}
-Ride-hailing prices depend on distance, surge, product tier, and external factors such as weather. Using the Kaggle dataset \emph{Uber \& Lyft Cab prices}~\cite{kaggle}, we formulate \emph{supervised multi-class classification}: inputs are ride and weather attributes, outputs are quintile-based \texttt{price\_bin} labels. We compare a shallow MLP to a deeper batch-normalized MLP. Performance is summarized by test accuracy and macro-averaged F1 with bootstrap CIs, and by normalized confusion matrices to inspect per-class recall patterns.
+Rideshare pricing depends on distance, surge, product type, and other factors; weather might matter too. The raw dataset gives price in dollars, but the assignment also calls for confusion matrices, so we split \texttt{price} into five quantile bins (quintiles) and treat the task as 5-way classification. We compare two MLP architectures and evaluate them with accuracy, macro-F1, bootstrap intervals, and normalized confusion matrices.
 
 \section{Problem Formulation}
-\textbf{Inputs:} numeric features \texttt{distance}, \texttt{surge\_multiplier}, and merged weather fields \texttt{temp}, \texttt{clouds}, \texttt{pressure}, \texttt{rain}, \texttt{humidity}, \texttt{wind}; categorical features \texttt{cab\_type}, \texttt{destination}, \texttt{location} (pickup), \texttt{name}, \texttt{product\_id} (one-hot encoded). Cab rows are aligned to weather via \texttt{merge\_asof} on \texttt{location} and nearest \texttt{time\_stamp}.
+\textbf{Input:} For each ride we use numeric fields \texttt{distance}, \texttt{surge\_multiplier}, and weather fields \texttt{temp}, \texttt{clouds}, \texttt{pressure}, \texttt{rain}, \texttt{humidity}, \texttt{wind} after merging. Categorical fields \texttt{cab\_type}, \texttt{destination}, \texttt{location} (pickup), \texttt{name}, and \texttt{product\_id} are one-hot encoded. Missing \texttt{rain} in the weather file was set to zero so we did not drop most of the rows.
 
-\textbf{Outputs:} integer class $y \in \{0,\ldots,4\}$ from quintile bins of \texttt{price} (computed after removing rows with missing price or features).
+\textbf{Output:} Class label $y \in \{0,\ldots,4\}$ from \texttt{pd.qcut} on \texttt{price} (five quantile bins).
 
-\textbf{Objective:} minimize cross-entropy loss on the training split with early stopping on validation loss.
+\textbf{Goal:} Minimize cross-entropy on the training set; we use a validation split and early stopping.
 
 \section{Models}
 \begin{itemize}
-  \item \textbf{ShallowMLP:} two ReLU hidden layers ($128 \rightarrow 64$ units) with dropout; output softmax via cross-entropy.
-  \item \textbf{DeepBatchNormMLP:} four blocks linear $\rightarrow$ batch norm $\rightarrow$ ReLU $\rightarrow$ dropout with widths $256 \rightarrow 128 \rightarrow 64 \rightarrow 32$.
+  \item \textbf{ShallowMLP:} Two hidden layers (128 then 64 units), ReLU, dropout, then softmax via cross-entropy loss.
+  \item \textbf{DeepBatchNormMLP:} Four blocks with width $256 \rightarrow 128 \rightarrow 64 \rightarrow 32$, each with batch norm, ReLU, and dropout.
 \end{itemize}
-Both models use AdamW and the same train/validation/test protocol (stratified split).
+Both use AdamW and the same stratified train/validation/test split (see code for sizes).
 
-\section{Performance Indicators and Best Model}
-We compare \textbf{accuracy}, \textbf{macro-F1} (unweighted mean of per-class F1), and \textbf{row-normalized confusion matrices} (each row sums to one, showing how each true bin is distributed across predicted bins).
+\section{Metrics and Which Model We Prefer}
+We report \textbf{accuracy}, \textbf{macro-F1} (unweighted mean of F1 over the five classes), and \textbf{row-normalized} confusion matrices (each row of counts is divided by its row sum so we see where each true bin goes).
 
 \begin{table}[htbp]
 \centering
-\caption{Test metrics with bootstrap $95\%$ CIs ($N{=}500$ resamples).}
+\caption{Test set metrics; bootstrap $95\%$ CIs from 500 resamples.}
 \begin{tabular}{@{}lcc@{}}
 \toprule
 Model & Accuracy & Macro-F1 \\
@@ -63,24 +61,24 @@ DeepBatchNormMLP & \DeepBatchNormMLPAcc{} [\DeepBatchNormMLPAccLo{}, \DeepBatchN
 \end{tabular}
 \end{table}
 
-\textbf{Justification:} Macro-F1 is slightly higher for DeepBatchNormMLP (\DeepBatchNormMLPFone{} vs.\ \ShallowMLPFone{}), with overlapping bootstrap intervals; accuracy differs by less than $0.1$ percentage points. We therefore select \textbf{DeepBatchNormMLP} as the best model among the two, while noting that gains are marginal and the shallower network is cheaper to train and deploy.
+In our run, macro-F1 was a bit higher for \textbf{DeepBatchNormMLP}, and the CIs overlap a lot, so the difference is small. Accuracy was also within a fraction of a percent. We still pick the deeper model as ``best'' here because macro-F1 is slightly better on the test set, but the shallow MLP is simpler if someone only cared about training time.
 
 \begin{figure}[htbp]
 \centering
 \includegraphics[width=\linewidth]{figures/confusion_norm_ShallowMLP.pdf}
-\caption{Row-normalized confusion matrix: ShallowMLP.}
+\caption{Normalized confusion matrix (ShallowMLP).}
 \end{figure}
 
 \begin{figure}[htbp]
 \centering
 \includegraphics[width=\linewidth]{figures/confusion_norm_DeepBatchNormMLP.pdf}
-\caption{Row-normalized confusion matrix: DeepBatchNormMLP.}
+\caption{Normalized confusion matrix (DeepBatchNormMLP).}
 \end{figure}
 
 \section{Pros and Cons}
-\textbf{Pros:} Nearest-time weather merge uses all available context; deep models capture nonlinear interactions; bootstrap CIs quantify uncertainty; normalized confusion matrices show per-bin behavior.
+\textbf{What worked:} Merging weather adds signal beyond distance alone; bootstrap CIs give a sense of how stable the metrics are; normalized confusion matrices show which price bins get confused.
 
-\textbf{Cons:} Price bins are not the same as regression on dollars; class boundaries depend on the marginal price distribution; merge\_asof introduces temporal approximation error; high-cardinality categoricals are one-hot limited to observed categories in training.
+\textbf{Limitations:} Quintile labels depend on the whole price distribution, so bins are not fixed dollar ranges; results are only as good as the merge (nearest weather time per neighborhood); we only tried two MLP designs; full-data training on CPU was slow.
 
 \begin{thebibliography}{1}
 \bibitem{kaggle} R.~Munde, ``Uber \& Lyft Cab prices,'' Kaggle Dataset, \url{https://www.kaggle.com/datasets/ravi72munde/uber-lyft-cab-prices}.

@@ -1,4 +1,4 @@
-"""Training loop and checkpointing for PyTorch classifiers."""
+"""Train with AdamW, early stopping on val loss, save weights."""
 
 from __future__ import annotations
 

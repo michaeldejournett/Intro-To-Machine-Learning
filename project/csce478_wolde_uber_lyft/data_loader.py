@@ -1,4 +1,4 @@
-"""Load cab rides and weather, merge on pickup neighborhood and nearest timestamp."""
+"""Read cab_rides + weather and merge by neighborhood and nearest time."""
 
 from __future__ import annotations
 
