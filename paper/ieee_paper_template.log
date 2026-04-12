@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.25 (TeX Live 2023/Debian) (preloaded format=pdflatex 2026.4.2)  11 APR 2026 15:22
+This is pdfTeX, Version 3.141592653-2.6-1.40.25 (TeX Live 2023/Debian) (preloaded format=pdflatex 2026.4.2)  12 APR 2026 11:55
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -493,19 +493,19 @@ LaTeX Font Info:    Trying to load font information for T1+pcr on input line 29
 (/usr/share/texlive/texmf-dist/tex/latex/psnfss/t1pcr.fd
 File: t1pcr.fd 2001/06/04 font definitions for T1/pcr.
 )
-LaTeX Font Info:    Trying to load font information for U+msa on input line 35.
+LaTeX Font Info:    Trying to load font information for U+msa on input line 33.
 
 
 (/usr/share/texlive/texmf-dist/tex/latex/amsfonts/umsa.fd
 File: umsa.fd 2013/01/14 v3.01 AMS symbols A
 )
-LaTeX Font Info:    Trying to load font information for U+msb on input line 35.
+LaTeX Font Info:    Trying to load font information for U+msb on input line 33.
 
 
 (/usr/share/texlive/texmf-dist/tex/latex/amsfonts/umsb.fd
 File: umsb.fd 2013/01/14 v3.01 AMS symbols B
 )
-Overfull \hbox (49.0954pt too wide) in paragraph at lines 86--94
+Overfull \hbox (49.0954pt too wide) in paragraph at lines 88--96
  [][] 
  []
 
@@ -513,33 +513,31 @@ Overfull \hbox (49.0954pt too wide) in paragraph at lines 86--94
 File: figures/normalized_confusion_matrix_lr.png Graphic file (type png)
 <use figures/normalized_confusion_matrix_lr.png>
 Package pdftex.def Info: figures/normalized_confusion_matrix_lr.png  used on in
-put line 109.
+put line 111.
 (pdftex.def)             Requested size: 113.39923pt x 80.82462pt.
 <figures/normalized_confusion_matrix_rf.png, id=50, 468.7914pt x 334.1283pt>
 File: figures/normalized_confusion_matrix_rf.png Graphic file (type png)
 <use figures/normalized_confusion_matrix_rf.png>
 Package pdftex.def Info: figures/normalized_confusion_matrix_rf.png  used on in
-put line 117.
+put line 119.
 (pdftex.def)             Requested size: 113.39923pt x 80.82462pt.
 <figures/actual_vs_predicted.png, id=51, 988.4127pt x 334.3692pt>
 File: figures/actual_vs_predicted.png Graphic file (type png)
 <use figures/actual_vs_predicted.png>
 Package pdftex.def Info: figures/actual_vs_predicted.png  used on input line 13
-3.
+7.
 (pdftex.def)             Requested size: 214.20154pt x 72.4594pt.
-<figures/feature_importance.png, id=52, 987.4491pt x 406.3983pt>
-File: figures/feature_importance.png Graphic file (type png)
-<use figures/feature_importance.png>
-Package pdftex.def Info: figures/feature_importance.png  used on input line 150
-.
-(pdftex.def)             Requested size: 214.20154pt x 88.15527pt.
 [1{/var/lib/texmf/fonts/map/pdftex/updmap/pdftex.map}{/usr/share/texlive/texmf-
 dist/fonts/enc/dvips/base/8r.enc}
 
 
 ]
-Underfull \vbox (badness 1668) has occurred while \output is active []
-
+<figures/feature_importance.png, id=70, 987.4491pt x 406.3983pt>
+File: figures/feature_importance.png Graphic file (type png)
+<use figures/feature_importance.png>
+Package pdftex.def Info: figures/feature_importance.png  used on input line 157
+.
+(pdftex.def)             Requested size: 214.20154pt x 88.15527pt.
 
 
 ** Conference Paper **
@@ -563,11 +561,11 @@ Package rerunfilecheck Info: File `ieee_paper_template.out' has not changed.
 (rerunfilecheck)             Checksum: 92662DBDA3C930C11BF4224D1D3447A1;1869.
  ) 
 Here is how much of TeX's memory you used:
- 12268 strings out of 476182
- 195331 string characters out of 5795596
- 1951975 words of memory out of 5000000
+ 12269 strings out of 476182
+ 195338 string characters out of 5795596
+ 1950975 words of memory out of 5000000
  34101 multiletter control sequences out of 15000+600000
- 670063 words of font info for 156 fonts, out of 8000000 for 9000
+ 671199 words of font info for 157 fonts, out of 8000000 for 9000
  14 hyphenation exceptions out of 8191
  75i,9n,79p,430b,501s stack positions out of 10000i,1000n,20000p,200000b,200000s
 </usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmex10.pfb></us
@@ -582,11 +580,12 @@ onts/cm/cmr9.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/
 cmsy7.pfb></usr/share/texlive/texmf-dist/fonts/type1/urw/courier/ucrr8a.pfb></u
 sr/share/texlive/texmf-dist/fonts/type1/urw/times/utmb8a.pfb></usr/share/texliv
 e/texmf-dist/fonts/type1/urw/times/utmbi8a.pfb></usr/share/texlive/texmf-dist/f
-onts/type1/urw/times/utmr8a.pfb>
-Output written on ieee_paper_template.pdf (2 pages, 1125475 bytes).
+onts/type1/urw/times/utmr8a.pfb></usr/share/texlive/texmf-dist/fonts/type1/urw/
+times/utmri8a.pfb>
+Output written on ieee_paper_template.pdf (2 pages, 1133205 bytes).
 PDF statistics:
- 152 PDF objects out of 1000 (max. 8388607)
- 110 compressed objects within 2 object streams
+ 157 PDF objects out of 1000 (max. 8388607)
+ 113 compressed objects within 2 object streams
  19 named destinations out of 1000 (max. 500000)
  109 words of extra memory for PDF output out of 10000 (max. 10000000)
 
