@@ -29,11 +29,11 @@
 
 \begin{abstract}
 This report studies ride fare prediction for Uber and Lyft trips using supervised learning.
-Given 14 trip-level features (distance, time, location, vehicle type, and weather conditions), the goal is to predict fare amount.
+Given 14 trip-level features including distance, time, location, vehicle type, and weather conditions, the goal is to predict fare amount.
 We evaluate baseline Linear Regression and ensemble Random Forest models, report test-set performance with 95\% confidence intervals, and compare model
 quality using regression metrics and normalized confusion matrices.
-The best model (Random Forest) achieves MAE = \textbf{\$1.24}, RMSE = \textbf{\$2.26}, and $R^2=\textbf{0.942}$
-with a 95\% confidence interval for MAE of \textbf{[1.237, 1.249]}.
+The best model, Random Forest, achieves MAE = \textbf{\$1.30}, RMSE = \textbf{\$2.32}, and $R^2=\textbf{0.939}$
+with a 95\% confidence interval for MAE of \textbf{[1.238, 1.380]}.
 Results indicate that Random Forest provides the best trade-off between accuracy,
 stability, and practical usability for this dataset, outperforming the linear baseline.
 \end{abstract}
@@ -44,28 +44,28 @@ machine learning, regression, random forest, Uber, Lyft, fare prediction
 
 \section{Introduction}
 Fare prediction is useful for pricing transparency, dispatch planning, and customer experience.
-This project compares baseline (linear) and ensemble regression models on Uber/Lyft trip data to estimate fares.
-Our final results are MAE = \textbf{\$1.24}, RMSE = \textbf{\$2.26}, and $R^2=\textbf{0.942}$,
-with 95\% confidence intervals computed from split-level standard deviations over repeated holdout runs.
+This project compares linear baseline and ensemble regression models on Uber/Lyft trip data to estimate fares.
+Our final results are MAE = \textbf{\$1.30}, RMSE = \textbf{\$2.32}, and $R^2=\textbf{0.939}$,
+with 95\% confidence intervals computed from split-level empirical percentiles over repeated holdout runs.
 Among the tested methods, Random Forest performs best for this dataset and is selected as the final approach.
 The report concludes with model strengths/limitations and practical implications for real-world deployment.
 
 \section{Problem Formulation}
-The task is to predict ride fare price (USD) from 14 trip and context features.
-Inputs include distance (miles), time features (hour, day of week, month), pickup and drop-off locations,
-vehicle type information (cab type and service name), and weather conditions (temperature, humidity, wind, pressure, rain, and clouds).
+The task is to predict ride fare price in USD from 14 trip and context features.
+Inputs include distance in miles, time features such as hour, day of week, and month, pickup and drop-off locations,
+vehicle type information such as cab type and service name, and weather conditions such as temperature, humidity, wind, pressure, rain, and clouds.
 The target is the trip fare price.
-Data was evaluated with repeated 80\%/20\% train-test holdout splits (20 runs).
-Preprocessing used median imputation for missing weather values and label encoding for categorical features.
+Data was evaluated with repeated 80\%/20\% train-test holdout splits across 20 runs.
+Preprocessing used train-split median imputation for missing numeric values and split-aware categorical encoding.
 Feature scaling was used for Linear Regression but not for Random Forest.
 
 \section{Models}
 Two main models are compared:
 \begin{itemize}
-	\item \textbf{Linear Regression (Baseline):} Standard least-squares regression with StandardScaler normalization.
+	\item \textbf{Linear Regression Baseline:} Standard least-squares regression with StandardScaler normalization.
           Target: establish a simple interpretable baseline.
-	\item \textbf{Random Forest Regressor (Ensemble):} 30 trees, max depth 10, random state 42.
-		  Designed to capture non-linear fare dependencies (e.g., distance-weather and location-time interactions).
+	\item \textbf{Random Forest Regressor Ensemble:} 30 trees, max depth 10, random state 42.
+		  Designed to capture non-linear fare dependencies, including distance-weather and location-time interactions.
 \end{itemize}
 No hyperparameter tuning was performed; parameters were chosen based on domain knowledge and
 computational efficiency for this dataset.
@@ -87,18 +87,15 @@ Confidence intervals (95\%) must be reported for at least one primary metric.
 \toprule
 Model & MAE (95\% CI) & RMSE (95\% CI) & $R^2$ (95\% CI) \\
 \midrule
-Linear Regression & 5.35 [5.327, 5.370] & 6.81 [6.776, 6.849] & 0.474 [0.470, 0.477] \\
-Random Forest & \textbf{1.24 [1.237, 1.249]} & \textbf{2.26 [2.225, 2.286]} & \textbf{0.942 [0.941, 0.944]} \\
+Linear Regression & 6.58 [5.012, 7.136] & 8.21 [6.675, 8.768] & 0.233 [0.130, 0.493] \\
+Random Forest & \textbf{1.30 [1.238, 1.380]} & \textbf{2.32 [2.125, 2.466]} & \textbf{0.939 [0.932, 0.948]} \\
 \bottomrule
 \end{tabular}
 \end{table}
 
-\section{Normalized Confusion Matrix (Binned Fares)}
+\section{Normalized Confusion Matrix for Binned Fares}
 Although the main task is regression, a normalized confusion matrix can be used by binning fares
-into ranges (e.g., low/medium/high):
-\begin{equation}
-\tilde{y} = \mathrm{bin}(y), \qquad \tilde{\hat{y}} = \mathrm{bin}(\hat{y}).
-\end{equation}
+into ranges such as low, medium, and high:
 Row-normalized confusion matrices for both Linear Regression and Random Forest are shown below.
 
 \begin{figure}[htbp]
@@ -160,8 +157,13 @@ validating domain knowledge about ride fare drivers.}
 \section{Model Comparison Summary}
 The comparison reveals clear differences in model philosophy and capability.
 Linear Regression provides a simple, interpretable baseline with explicit feature contributions.
+Its prediction rule has a single global equation, so each feature coefficient has a direct and consistent meaning across all samples:
+\begin{equation}
+\hat{y}=w_0+\sum_j w_j x_j.
+\end{equation}
+This makes it easier to explain why a fare prediction increases or decreases when one input changes.
 Random Forest captures complex non-linear patterns, delivering superior performance at the cost of interpretability.
-For this application, the $R^2$ improvement from 0.474 to 0.942 and MAE reduction from \$5.35 to \$1.24
+For this application, the $R^2$ improvement from 0.233 to 0.939 and MAE reduction from \$6.58 to \$1.30
 justify the shift toward the ensemble method.
 
 \section{Pros and Cons by Model}
@@ -176,7 +178,7 @@ justify the shift toward the ensemble method.
 
 \textbf{Cons:}
 \begin{itemize}
-	\item Lower predictive performance on this dataset (MAE = \$5.35, $R^2$ = 0.474).
+	\item Lower predictive performance on this dataset (MAE = \$6.58, $R^2$ = 0.233).
 	\item Cannot capture complex non-linear interactions as effectively.
 \end{itemize}
 
@@ -184,7 +186,7 @@ justify the shift toward the ensemble method.
 
 \textbf{Pros:}
 \begin{itemize}
-	\item Best predictive performance on this dataset (MAE = \$1.24, $R^2$ = 0.942).
+	\item Best predictive performance on this dataset (MAE = \$1.30, $R^2$ = 0.939).
 	\item Captures non-linear interactions between features.
 	\item Less sensitive to feature scaling.
 \end{itemize}
@@ -196,18 +198,15 @@ justify the shift toward the ensemble method.
 \end{itemize}
 
 \section{Conclusion}
-Random Forest regression achieves the best performance among tested models on this Uber/Lyft dataset, explaining 94.2\% of fare variance with a mean absolute error of \$1.24.
+Random Forest regression achieves the best performance among tested models on this Uber/Lyft dataset, explaining 93.9\% of fare variance with a mean absolute error of \$1.30.
 Despite the strength of the ensemble approach, a linear baseline is provided for transparency and comparison.
 Future work should explore temporal validation to quantify drift sensitivity,
 and integration of external data (e.g., real-time traffic conditions) to improve generalization.
 
 \section{Threats to Validity}
 The evaluation uses repeated random holdout splits rather than a strict temporal split, so deployment-time drift effects may still be underrepresented.
-Confidence intervals are estimated from split-level metric standard deviations under a normal approximation, which improves partition robustness but can still underestimate broader data-generation uncertainty.
+Confidence intervals are estimated from split-level empirical percentiles, which improves robustness to non-normal metric distributions but can still underestimate broader data-generation uncertainty.
 The sampled subset (20,000 trips) may not capture all rare demand or weather regimes, and this can affect tail-error behavior.
 Finally, because surge multiplier fields are excluded, the model estimates fare primarily from trip context and weather proxies rather than direct dynamic-pricing signals.
-
-\section*{Acknowledgment}
-Thanks to the Intro to Machine Learning course staff for project guidance and feedback.
 
 \end{document}

@@ -12,7 +12,7 @@ from sklearn.ensemble import RandomForestRegressor
 from sklearn.linear_model import LinearRegression
 from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
 from sklearn.model_selection import train_test_split
-from sklearn.preprocessing import LabelEncoder, StandardScaler
+from sklearn.preprocessing import StandardScaler
 
 warnings.filterwarnings("ignore")
 
@@ -46,11 +46,14 @@ def load_data() -> tuple[pd.DataFrame, pd.DataFrame, Path]:
         with z.open("weather.csv") as f:
             weather = pd.read_csv(f)
 
-    rides = rides.sample(n=20_000, random_state=42)
+    sample_size = min(20_000, len(rides))
+    rides = rides.sample(n=sample_size, random_state=42)
     return rides, weather, zip_path
 
 
-def prepare_data(rides: pd.DataFrame, weather: pd.DataFrame) -> tuple[pd.DataFrame, pd.Series, list[str]]:
+def prepare_data(
+    rides: pd.DataFrame, weather: pd.DataFrame
+) -> tuple[pd.DataFrame, pd.Series, list[str], list[str], list[str]]:
     rides = rides.copy()
     weather = weather.copy()
 
@@ -75,15 +78,7 @@ def prepare_data(rides: pd.DataFrame, weather: pd.DataFrame) -> tuple[pd.DataFra
     print(f"Merged shape: {df.shape}")
     print(f"Weather matched: {matched:,} / {len(df):,} rows ({matched / len(df) * 100:.1f}%)")
 
-    for col in ["temp", "clouds", "pressure", "rain", "humidity", "wind"]:
-        df[col].fillna(df[col].median(), inplace=True)
-
-    cat_cols = ["cab_type", "name", "source", "destination"]
-    for col in cat_cols:
-        encoder = LabelEncoder()
-        df[col + "_enc"] = encoder.fit_transform(df[col].astype(str))
-
-    features = [
+    numeric_cols = [
         "distance",
         "hour",
         "day_of_week",
@@ -94,21 +89,19 @@ def prepare_data(rides: pd.DataFrame, weather: pd.DataFrame) -> tuple[pd.DataFra
         "rain",
         "humidity",
         "wind",
-        "cab_type_enc",
-        "name_enc",
-        "source_enc",
-        "destination_enc",
     ]
+    cat_cols = ["cab_type", "name", "source", "destination"]
+    features = numeric_cols + cat_cols
 
     X = df[features].copy()
     y = df["price"].copy()
-    X = X.fillna(X.median(numeric_only=True)).fillna(0)
 
     print(f"Feature matrix shape: {X.shape}")
-    print(f"Remaining NaNs: {X.isna().sum().sum()}")
+    print(f"Rows with any missing predictors: {X.isna().any(axis=1).sum()}")
     print("surge_multiplier excluded from training features")
 
-    return X, y, features
+    encoded_feature_names = numeric_cols + [f"{col}_enc" for col in cat_cols]
+    return X, y, numeric_cols, cat_cols, encoded_feature_names
 
 
 def evaluate_model(name: str, y_true: pd.Series, preds: np.ndarray) -> dict:
@@ -120,20 +113,51 @@ def evaluate_model(name: str, y_true: pd.Series, preds: np.ndarray) -> dict:
     return {"Model": name, "MAE": mae, "RMSE": rmse, "R2": r2}
 
 
-def ci_from_std(values: list[float], z_value: float = 1.96) -> tuple[float, float]:
+def ci_from_percentiles(values: list[float], alpha: float = 0.05) -> tuple[float, float]:
     arr = np.asarray(values, dtype=float)
-    mean_val = float(np.mean(arr))
-    if len(arr) < 2:
-        return mean_val, mean_val
-    std_val = float(np.std(arr, ddof=1))
-    se_val = std_val / np.sqrt(len(arr))
-    margin = z_value * se_val
-    return mean_val - margin, mean_val + margin
+    if arr.size == 0:
+        raise ValueError("Cannot compute CI from an empty list of values.")
+    low = float(np.percentile(arr, 100 * (alpha / 2)))
+    high = float(np.percentile(arr, 100 * (1 - alpha / 2)))
+    return low, high
+
+
+def encode_split_features(
+    X_train: pd.DataFrame,
+    X_test: pd.DataFrame,
+    numeric_cols: list[str],
+    cat_cols: list[str],
+) -> tuple[pd.DataFrame, pd.DataFrame]:
+    X_train_num = X_train[numeric_cols].copy()
+    X_test_num = X_test[numeric_cols].copy()
+
+    medians = X_train_num.median(numeric_only=True)
+    X_train_num = X_train_num.fillna(medians)
+    X_test_num = X_test_num.fillna(medians)
+
+    X_train_cat = pd.DataFrame(index=X_train.index)
+    X_test_cat = pd.DataFrame(index=X_test.index)
+
+    for col in cat_cols:
+        train_vals = X_train[col].astype("string").fillna("missing")
+        test_vals = X_test[col].astype("string").fillna("missing")
+
+        categories = pd.Index(pd.unique(train_vals))
+        mapping = {value: idx for idx, value in enumerate(categories)}
+
+        X_train_cat[f"{col}_enc"] = train_vals.map(mapping).astype(int)
+        X_test_cat[f"{col}_enc"] = test_vals.map(mapping).fillna(-1).astype(int)
+
+    X_train_enc = pd.concat([X_train_num, X_train_cat], axis=1)
+    X_test_enc = pd.concat([X_test_num, X_test_cat], axis=1)
+    return X_train_enc, X_test_enc
 
 
 def evaluate_repeated_holdout(
     X: pd.DataFrame,
     y: pd.Series,
+    numeric_cols: list[str],
+    cat_cols: list[str],
     n_splits: int = N_SPLITS,
     test_size: float = TEST_SIZE,
     base_random_state: int = BASE_RANDOM_STATE,
@@ -144,21 +168,37 @@ def evaluate_repeated_holdout(
     }
     representative = None
 
+    stratify_target = None
+    try:
+        y_bins = pd.qcut(y, q=10, labels=False, duplicates="drop")
+        if pd.Series(y_bins).nunique(dropna=True) >= 2:
+            stratify_target = y_bins
+    except ValueError:
+        stratify_target = None
+
     for split_idx in range(n_splits):
         split_seed = base_random_state + split_idx
-        X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=test_size, random_state=split_seed)
+        X_train, X_test, y_train, y_test = train_test_split(
+            X,
+            y,
+            test_size=test_size,
+            random_state=split_seed,
+            stratify=stratify_target,
+        )
+
+        X_train_enc, X_test_enc = encode_split_features(X_train, X_test, numeric_cols, cat_cols)
 
         scaler = StandardScaler()
-        X_train_sc = scaler.fit_transform(X_train)
-        X_test_sc = scaler.transform(X_test)
+        X_train_sc = scaler.fit_transform(X_train_enc)
+        X_test_sc = scaler.transform(X_test_enc)
 
         lr_model = LinearRegression()
         lr_model.fit(X_train_sc, y_train)
         preds_lr = lr_model.predict(X_test_sc)
 
         rf_model = RandomForestRegressor(n_estimators=30, max_depth=10, random_state=split_seed, n_jobs=-1)
-        rf_model.fit(X_train, y_train)
-        preds_rf = rf_model.predict(X_test)
+        rf_model.fit(X_train_enc, y_train)
+        preds_rf = rf_model.predict(X_test_enc)
 
         lr_metrics = evaluate_model("Linear Regression", y_test, preds_lr)
         rf_metrics = evaluate_model("Random Forest", y_test, preds_rf)
@@ -176,9 +216,9 @@ def evaluate_repeated_holdout(
         rmse_values = metric_store[model_name]["RMSE"]
         r2_values = metric_store[model_name]["R2"]
 
-        mae_ci = ci_from_std(mae_values)
-        rmse_ci = ci_from_std(rmse_values)
-        r2_ci = ci_from_std(r2_values)
+        mae_ci = ci_from_percentiles(mae_values)
+        rmse_ci = ci_from_percentiles(rmse_values)
+        r2_ci = ci_from_percentiles(r2_values)
 
         rows.append(
             {
@@ -277,9 +317,9 @@ def main() -> None:
     print(f"Rides shape: {rides.shape}")
     print(f"Weather shape: {weather.shape}")
 
-    X, y, features = prepare_data(rides, weather)
+    X, y, numeric_cols, cat_cols, encoded_features = prepare_data(rides, weather)
 
-    metrics_df, representative = evaluate_repeated_holdout(X, y)
+    metrics_df, representative = evaluate_repeated_holdout(X, y, numeric_cols, cat_cols)
     y_test, preds_lr, preds_rf, X_train_sc, y_train, rf_model = representative
     metrics_df.to_csv(PROJECT_DIR / "paper_metrics_with_ci.csv", index=False)
 
@@ -290,7 +330,7 @@ def main() -> None:
     print(f"\nBest Model: {best_row['Model']}")
 
     plot_actual_vs_predicted(y_test, preds_lr, preds_rf)
-    plot_feature_importance(features, X_train_sc, y_train, rf_model)
+    plot_feature_importance(encoded_features, X_train_sc, y_train, rf_model)
     plot_confusion_matrices(y_test, preds_lr, preds_rf)
 
     print(f"\nSaved figures to: {PAPER_FIG_DIR}")
